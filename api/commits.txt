@@ -1,0 +1,42 @@
+17.03.25|999597de788ff6fca922f1cef9c13dc90b29d440|Initial Commit
+18.03.25|813557aeced97e108477269cb1baaa02924d05fa|First prototype. Problem with resizing of the images need more research.
+20.03.25|ec4b7d8cc9b66c35b3ce61bab6d64c8c4f971a11|Camera now functioning. But Zoom still not perfect.
+21.03.25|2281022e2d1d60a6721e8471d059f69723cfe1d1|Add test for PriorityQueue<ObjectInformation>
+21.03.25|3873d306921e0cdadc9a69b138a16745740f2e7d|Add file containing constants. Might want to think about if that should be changed to Singleton 'Settings' or something along those lines. User could set confidence or distance by desire.
+21.03.25|0e879ae9532818927dd0b383ca099514f0c335e1|Add base for object caching.
+21.03.25|5e9e6aee85e89d845042fabaf36d00e2e0db99d0|Add test cases for datastructure and first sketch of the ObjectCache implementation.
+21.03.25|a3f82d8dc64540b7cf17fa6d40bef5ea2ffe075e|Some fixes. Now working on interpreting the model's output correctly as well as printing it on the screen appropriately.
+24.03.25|46758fd64d316b91f1bc11c0bb877d57f750fa18|Still terribly slow. Add iou and extracting only highly confident classes. Nothing being showed.
+26.03.25|6756892ce9028e02b2cfd06463625e54455303ce|Add HTMLRetrieverService and implemented some methods. Testing will take place after segmentation extraction has been successful.
+26.03.25|005f217a984e81763b581fccdb2fb9b4ceb64265|Add first sketch of the face detection.
+27.03.25|70b7c4cba2cc4da95b14b9a209c5c7b3f3fc0550|Add Extension Group for better structure.
+27.03.25|e004704da984937535ed1296a3444a9789946101|Add launch screen and application icon.
+31.03.25|2eea08fec63e673c64db1efe256d55281a4c2bda|Add Settings UI.
+31.03.25|3ef4d2bdd4be47a42f0c1e51cc8098fa6a439f57|Add various elements.
+31.03.25|206640c63a6d72c64a31b2253e1d202ec8cd6738|Add helpers and CALayer to try and visualize masks.
+02.04.25|b8ac91e7b0c3d7283660983f4d8ed07399bf835f|Add gitignore.
+03.04.25|321e6b5ec0f96d36551d28eedf115ff3d0f2187d|Adding YOLO-components to existing strucutre.
+04.04.25|2e889546993fc41cd056075b7dbcd5873e3e7857|Connected first instance  of the YOLO library with my application. Now further design in progress.
+05.04.25|cce935ee625a8b9f7ce85c2fb598ed870f13db82|Need to do rework on settings, as this was a rather weird approach. The legend indicating which items are in scope is working as intended. Problem is linking it up with Settings properly.
+07.04.25|894ab4e8df87a17198c59efc3d302ccfa3e7ae57|Configuration of settings and embedding into program. Now the model seems to adapt it's output depending on the variables set. Issues with apples.
+11.04.25|547f022231cfb6d5639abe05550531a84b54074a|First draft of regular model combined with poster model.
+12.04.25|9e7cc6aa8d4fab96caad2c28b92982ff39d17d69|Add screenshot feature. Still not final. Will be done later as for QoA-changes.
+13.04.25|eeac0529ad71d35ef441e03a63aecac0d0c99006|Add function which detects user input during a frozen screen. Next step is implementing the result view.
+15.04.25|e6911515b3a75c3c2f408a7830a1478a6f02680f|Add first sketch of the detailed information view. Now working to refine process of information retrieval for class 'bird'.
+16.04.25|fc33311a1c3ed876f0ef22f81e7d3ca51b72c1f9|Add BirdClassification as well as connected it to the database for occurrence counts.
+19.04.25|75f1e840223aed104fcb0b07349ac3b2024554c7|'Bird'-workflow seems to work now. Backend has been re-configured.
+21.04.25|76d7638fbcf49610ed4e51f477b98e540e03fe42|Refactoring workflow. This step was needed to add further visual feedback to the user. This is the next feature which needs to be added.
+21.04.25|0c94b4238dfe7c4658b6f2c5199131f3c571e865|Add new UI component inside 'DetailedObjectDescriptionView' to further increase feedback-loop to the user.
+23.04.25|5d172e6c20a5094523202471189d4ba4a5935a71|Caching system seems to work now. Persistence is implemented as well. The algorithm for caching needs to be refined, as at the moment, merely the the check if the object's class is the same suffices to get a hit, which does not work in real-life, but is good for testing.
+24.04.25|a1dd39db6acbc5cc240a149fc79c7ebe61d4c3fb|Fix mask overlay on camera and add QR-Code retrieval for posters.
+24.04.25|43b92bcb9276e9b63d854316e48f461d0dd29a1f|Add 'missing animal registry' to some categories of information retrieval process. Additional querying for more precisely naviagting to the website is not allowed.
+28.04.25|bdf9faca7eb20f3aa172b5df47c1a6d289ccabf2|Add messaging system first draft.
+29.04.25|c144d73c8111a465a95ed65b31b27503780fe93d|Add first instance of 'Location-based Search' for past objects retrieved. Now working on adding feature to select a given object to view it's contents.
+29.04.25|efda41db78acfaa0189d6ffaf5eb7fa2de7029ce|Finalized 'Past-Objects'-View's visual aspects. Next step is to add navigation to an object of choice.
+01.05.25|6e277db09f1729a94bee54a0725986d9540870d1|Add feature to navigate 'Past Objects' using the built-in map.
+05.05.25|6cc5b2dfbb60ea5d01c3fc857ceecbc87ff9725b|MessageSystem seems to work now. Caching rework.
+05.05.25|e5321bbce530358bba13e5da21caed8a37b52212|Past Objects seems to behave as intended now.
+06.05.25|6e06a1ba23808894b995e9828f985386c6ceff9c|Add feature where you can download your own pictures for inference. Downloading the picture from it is not yet perfect. I am postponing fixing this for a rainy day.
+08.05.25|604d6d033e1027b5eff8489e52a0296a6ffb2a9e|Add screen showing changes if there are any. This is supposed to help giving the testers feedback from the development side.
+08.05.25|013f5834aac6c94cc1909fe2a6a053d9e5635986|Improved design of 'Patch Notes'.
+08.05.25|252db7c48cb34fcd1db5bdcde4dbaa0dbb54680a|Fixed bug with assigning wrong new hash version.
