@@ -35,16 +35,10 @@ from typing import Optional
 import unicodedata
 import geopandas as gpd
 from math import sqrt
+from service.session import Base, engine
 
 known_species = set() # Those are all the species which are present in our database
 
-db_config = {
-    "dbname": os.getenv("POSTGRES_DB", "default_db"),
-    "user": os.getenv("POSTGRES_USER", "default_user"),
-    "password": os.getenv("POSTGRES_PASSWORD", "default_password"),
-    "host": os.getenv("API_HOST", "default_host"),
-    "port": os.getenv("DB_PORT", "5432")
-}
 
 general_config = {
     "reverse_search_limit": os.getenv("REVERSE_SEARCH_LIMIT", 100),
@@ -94,6 +88,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+Base.metadata.create_all(bind=engine)
 
 def startup():
     global refresh_repo
@@ -111,68 +106,6 @@ def startup():
     gdf = gpd.read_file(swiss_shp)
     gdf = gdf.to_crs(epsg=4326)
 
-def get_db_conn():
-    try:
-        connection = psycopg2.connect(**db_config)
-        return connection
-    except Exception as e:
-        print(f"get_db_connection: {e}")
-        return None
-
-
-def refresh_known_species():
-    connection = get_db_conn()
-    cursor = connection.cursor()
-    cursor.execute("SELECT DISTINCT species_name FROM birds;")
-    results = cursor.fetchall()
-    known_species.update(result[0] for result in results)
-    cursor.close()
-    connection.close()
-
-def setup_cache():
-    connection = get_db_conn()
-    cursor = connection.cursor()
-    cursor.execute("SELECT DISTINCT id, label FROM labels;")
-    labels = cursor.fetchall()
-    counter = 0
-    batch = []
-    query = '''INSERT INTO synonyms (label_id, synonym) VALUES (%s, %s);'''
-    print(f"We have {len(labels)} labels retrived.")
-    for (id, label) in labels:
-        new_label = None
-        steps = 0
-        while new_label is None and steps < 50:
-            new_label = retrieve_known_species(label)
-            steps = steps + 1
-            if steps == 100 and new_label is None:
-                print(f"Did not find label for {label}.")
-        counter = counter + 1
-        if new_label is not None:
-            batch.append((id, new_label))
-
-def retrieve_known_species(label):
-    split_label = label.split(" ")
-    split_label.append(label)
-    split_label = list(set(split_label))
-    print(f"Split_label = {split_label}")
-    label_synonyms = {}
-    for split in split_label:
-        try:
-            label_synonyms[split] = to_scientific([split])[split][1]
-            #print(f"Synonyms for {split}: {label_synonyms[split]}")
-        except Exception as e:
-            #print(f"Error synonyms extraction: {e}")
-            continue
-    if not bool(known_species):
-        refresh_known_species()
-    #print("Sorting keys now")
-    sorted_keys = sorted(label_synonyms.keys(), key=lambda k: -k.count(" "))
-    for key in sorted_keys:
-        for val in label_synonyms[key]:
-            if val in known_species:
-                return val
-    return None
-
 
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -189,45 +122,6 @@ model = EfficientNetForImageClassification.from_pretrained("dennisjooo/Birds-Cla
 
 
 # Bird
-
-@app.post("/classify")
-async def classify_bird(
-        file: UploadFile = File(...)
-    ):
-    try:
-        print("Classify_bird")
-        contents = await file.read()
-        img = Image.open(io.BytesIO(contents)).convert("RGB")
-
-        inputs = preprocessor(img, return_tensors="pt")
-        with torch.no_grad():
-            logits = model(**inputs).logits
-        predicted_label = logits.argmax(-1).item()
-        label = model.config.id2label[predicted_label]
-        print(f"Label: {label}")
-        normalized_label = label.strip().lower()
-
-        query = '''
-            SELECT s.synonym
-            FROM labels l
-            JOIN synonyms s ON l.id = s.label_id
-            WHERE l.label = %s
-            LIMIT 1;
-        ''' 
-        connection = get_db_conn()
-        if connection is None:
-            raise Exception("Database could not be reached!")
-        cursor = connection.cursor()
-        cursor.execute(query,(label,))
-        result = cursor.fetchall()
-        print(result)
-        try:
-            return JSONResponse(content={"birdName": result[0][0]}, status_code=200)
-        except Exception as e:
-            print(str(e))
-            return JSONResponse(content={"birdName": normalized_label}, status_code=200)
-    except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 @app.post("/birdplot")
 async def get_bird_plot(
@@ -261,89 +155,6 @@ def get_canton(lat, lon):
         return cantons_gdf[match.iloc[0]['NAME']]
     return None
 
-
-def create_bird_plot(canton, bird_name, language):
-    try:
-        result = None
-        connection = get_db_conn()
-        cursor = connection.cursor()
-        if canton is None:
-            command = '''
-                SELECT year_number, SUM(total_count)
-                FROM birds_materialized
-                WHERE species_name = %s
-                GROUP BY year_number
-                LIMIT 10;
-            '''
-            cursor.execute(command, (bird_name,))
-            result = cursor.fetchall()
-        else:
-            command = '''
-                SELECT year_number, SUM(total_count)
-                FROM birds_materialized
-                WHERE canton = %s
-                AND species_name = %s
-                GROUP BY year_number
-                LIMIT 10;
-            '''
-            cursor.execute(command, (canton, bird_name,))
-            result = cursor.fetchall()
-
-        if not result:
-            command = '''
-                SELECT year_number, SUM(total_count)
-                FROM birds_materialized
-                WHERE species_name = %s
-                GROUP BY year_number
-                LIMIT 10;
-            '''
-            cursor.execute(command, (bird_name,))
-            result = cursor.fetchall()
-            if result:
-                year_to_count = {year: count for year, count in result}
-                max_year = max(year_to_count.keys())
-                years = list(range(max_year - 9, max_year + 1))
-                filled_results = [(year, year_to_count.get(year, 0)) for year in years]
-                years, counts = zip(*filled_results)
-
-                fig, ax = plt.subplots()
-                ax.plot(years, counts, marker='o')
-                ax.set_title(
-                    f"Occurrences of {bird_name} in Switzerland" if language == "ENG" else f"Sichtungen von {bird_name} in der Schweiz")
-                ax.set_xlabel("Year" if language == "ENG" else "Jahr")
-                ax.set_ylabel("Count" if language == "ENG" else "Anzahl")
-                fig.autofmt_xdate()
-
-                buf = io.BytesIO()
-                plt.savefig(buf, format="png")
-                buf.seek(0)
-                plt.close(fig)
-                return buf
-            else:
-                print(f"No data found for {bird_name} and {canton}.")
-                return None
-        else:
-            year_to_count = {year: count for year, count in result}
-            max_year = max(year_to_count.keys())
-            years = list(range(max_year - 9, max_year + 1))
-            filled_results = [(year, year_to_count.get(year, 0)) for year in years]
-            years, counts = zip(*filled_results)
-
-            fig, ax = plt.subplots()
-            ax.plot(years, counts, marker='o')
-            ax.set_title(f"Occurrences of {bird_name} in {canton}" if language == "ENG" else f"Sichtungen von {bird_name} in {canton}")
-            ax.set_xlabel("Year" if language == "ENG" else "Jahr")
-            ax.set_ylabel("Count" if language == "ENG" else "Anzahl")
-            fig.autofmt_xdate()
-
-            buf = io.BytesIO()
-            plt.savefig(buf, format="png")
-            buf.seek(0)
-            plt.close(fig)
-            return buf
-    except Exception as e:
-        print(f"Error in create_bird_plot: {e}")
-        raise
 
 import pyjokes
 

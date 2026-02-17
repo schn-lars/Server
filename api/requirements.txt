@@ -4,7 +4,7 @@ torch
 transformers
 pillow
 matplotlib
-psycopg2
+psycopg2-binary
 pydantic
 sqlmodel
 geopandas
