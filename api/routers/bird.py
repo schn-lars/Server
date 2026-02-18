@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form
 from fastapi.responses import JSONResponse, StreamingResponse
 from service.location import get_canton
 from service.bird import classify_bird, create_bird_plot
-from service.session import get_db
+from service.bird_session import get_db
 from sqlalchemy.orm import Session
 
 bird_api_router = APIRouter(

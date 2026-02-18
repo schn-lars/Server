@@ -1,8 +1,11 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, BigInteger, Numeric
+from sqlalchemy import Column, Integer, ForeignKey, Text, BigInteger, Numeric
 from sqlalchemy.orm import relationship
-from service.session import Base
+from decimal import Decimal
+from service.bird_session import BirdBase
+from typing import Optional
+from service.location_session import LocationBase
 
-class Birds(Base):
+class Birds(BirdBase):
     __tablename__ = "birds"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -18,7 +21,7 @@ class Birds(Base):
     year_number = Column(Integer, nullable=True)
 
 
-class Label(Base):
+class Label(BirdBase):
     __tablename__ = "labels"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -30,7 +33,7 @@ class Label(Base):
         cascade="all, delete-orphan"
     )
 
-class BirdsMaterialized(Base):
+class BirdsMaterialized(BirdBase):
     __tablename__ = "birds_materialized"
 
     species_name = Column(Text, primary_key=True)
@@ -39,7 +42,7 @@ class BirdsMaterialized(Base):
 
     total_count = Column(BigInteger)
 
-class Synonym(Base):
+class Synonym(BirdBase):
     __tablename__ = "synonyms"
 
     label_id = Column(
@@ -51,3 +54,17 @@ class Synonym(Base):
     synonym = Column(Text, primary_key=True)
 
     label = relationship("Label", back_populates="synonyms")
+
+class Adress(LocationBase):
+    __tablename__ = "adresses"
+
+    id = Column(Integer, primary_key=True)
+    street = Column(Text)
+    number = Column(Text)
+    zip = Column(Integer)
+    zip_label = Column(Text)
+    name = Column(Text)
+    canton = Column(Text)
+    coord_x = Column(Numeric(18, 15), nullable=True)
+    coord_y = Column(Numeric(18, 15), nullable=True)
+    normalized_street = Column(Text)
