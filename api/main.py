@@ -5,6 +5,8 @@ import threading
 from service.bird_session import Base, engine
 from service.resources import clear_images, deletor
 from service.patchnotes import puller
+
+# Routers
 from routers.bird import bird_api_router
 from routers.date import date_api_router
 from routers.jokes import jokes_api_router
@@ -15,6 +17,7 @@ from routers.share import share_api_router
 from routers.shopping import shopping_api_router
 from routers.weather import weather_api_router
 from routers.utils import utils_api_router
+from routers.inference import inference_api_router
 
 #Startup method which is being called when you start up application
 @asynccontextmanager
@@ -36,6 +39,7 @@ app.include_router(share_api_router)
 app.include_router(shopping_api_router)
 app.include_router(weather_api_router)
 app.include_router(utils_api_router)
+app.include_router(inference_api_router)
 
 app.add_middleware(
     CORSMiddleware,

@@ -16,3 +16,4 @@ google-search-results
 asyncio
 spark-nlp
 pyspark
+ultralytics
