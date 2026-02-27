@@ -1,23 +1,19 @@
-ARG IMAGE_VARIANT=slim-buster
-ARG OPENJDK_VERSION=8
-ARG PYTHON_VERSION=3.9.8
+FROM eclipse-temurin:8-jdk-jammy
 
-FROM python:${PYTHON_VERSION}-${IMAGE_VARIANT} AS py3
-FROM openjdk:${OPENJDK_VERSION}-${IMAGE_VARIANT}
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    apt-get clean
 
-COPY --from=py3 / /
-
-ARG PYSPARK_VERSION=3.2.0
-
-RUN pip install --no-cache-dir pyspark==${PYSPARK_VERSION} \
+RUN pip3 install --no-cache-dir \
+    pyspark==3.2.0 \
     spark-nlp \
     fastapi \
     numpy \
     uvicorn[standard] \
     pydantic
 
-COPY main.py /app/main.py
 WORKDIR /app
+COPY main.py .
 
 EXPOSE 5050
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5050"]

@@ -13,7 +13,7 @@ async def get_help(
         language: str = "ENG"
     ):
     try:
-        return FileResponse(path="./Mr__Intenso__How_To.pdf" if language == "ENG" else "Mr__Intenso__Hilfe.pdf", status_code=200)
+        return FileResponse(path="../resources/Mr__Intenso__How_To.pdf" if language == "ENG" else "../resources/Mr__Intenso__Hilfe.pdf", status_code=200)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 

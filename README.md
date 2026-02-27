@@ -30,6 +30,18 @@ Additionally, we have provided ``mock.env``-files in all directories. These will
 1. ``docker build -t api ./api``
 2. ``docker run -d --env-file ./api/.env --name api --network network --mount type=bind,source="$(pwd)/api",target=/app -p 6969:6969 api``
 
+### Smol
+This container is designed to run in an environment with access to a GPU.
+Since we are using NVIDIA GeForce RTX 4090, we needed to run some commands before.
+#### Prerequisites:
+1. TODO Rahel's commands rein
+2. Follow https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#with-apt-ubuntu-debian
+3. Verify your Docker-container toolkit for nvidia using: ``docker run --rm --gpus all nvidia/cuda:12.2.0-runtime-ubuntu22.04 nvidia-smi``. If you see your GPU, then you can continue.
+#### Actual Container:
+1. ``cd smol``
+2. ``sudo docker build --no-cache -t smol .``
+3. ``sudo docker run --name smol --gpus all -p 8000:8000 smol``
+
 After all this is done, the containers should be connected to each other and the API is accepting requests.
 
 ## Resources

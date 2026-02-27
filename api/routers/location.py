@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from service.location_session import get_location_db
+from service.session import get_db
 from sqlalchemy.orm import Session
 from service import location
 from service.requestforms import LocationRequest
@@ -13,7 +13,7 @@ location_api_router = APIRouter(
 def get_city(
         lat: float,
         long: float,
-        db: Session = Depends(get_location_db)
+        db: Session = Depends(get_db)
     ):
     try:
         closest_city = location.get_city(lat=lat, long=long, db=db)
@@ -26,7 +26,7 @@ def get_city(
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 @location_api_router.post("/location")
-async def get_location(request: LocationRequest, db: Session = Depends(get_location_db)):
+async def get_location(request: LocationRequest, db: Session = Depends(get_db)):
     print("Get_location: Raw text:", request.raw_text)
     status_code, content = location.get_location(request=request, db=db)
     return JSONResponse(content=content, status_code=status_code)

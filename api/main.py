@@ -2,9 +2,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import threading
-from service.bird_session import Base, engine
+from service.session import Base, engine
 from service.resources import clear_images, deletor
 from service.patchnotes import puller
+from service.entities import *
 
 # Routers
 from routers.bird import bird_api_router

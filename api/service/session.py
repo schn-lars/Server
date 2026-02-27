@@ -15,7 +15,7 @@ DATABASE_URL = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_na
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-BirdBase = declarative_base()
+Base = declarative_base()
 
 def get_db():
     db = SessionLocal()

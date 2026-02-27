@@ -7,7 +7,7 @@ import threading
 import os
 
 refresh_repo = True
-LOG_FILE = Path("./commits.txt")
+LOG_FILE = Path("../resources/commits.txt")
 GITHUB_API_KEY = os.getenv("GITHUB_KEY", "DUMMY_KEY")
 lock = threading.Lock()
 

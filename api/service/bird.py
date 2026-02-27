@@ -4,8 +4,7 @@ from transformers import EfficientNetImageProcessor, EfficientNetForImageClassif
 import torch
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from entities import Label, Synonym, BirdsMaterialized
-from EcoNameTranslator import to_species, to_scientific
+from .entities import Label, Synonym, BirdsMaterialized
 import matplotlib.pyplot as plt
 
 preprocessor = EfficientNetImageProcessor.from_pretrained("dennisjooo/Birds-Classifier-EfficientNetB2")
@@ -33,13 +32,6 @@ def create_bird_plot(canton, bird_name, language, db: Session):
     try:
         result = None
         if canton is None:
-            command = '''
-                SELECT year_number, SUM(total_count)
-                FROM birds_materialized
-                WHERE species_name = %s
-                GROUP BY year_number
-                LIMIT 10;
-            '''
             result = db\
                 .query(
                     BirdsMaterialized.year_number,
@@ -49,14 +41,6 @@ def create_bird_plot(canton, bird_name, language, db: Session):
                 .limit(limit=10)\
                 .all()
         else:
-            command = '''
-                SELECT year_number, SUM(total_count)
-                FROM birds_materialized
-                WHERE canton = %s
-                AND species_name = %s
-                GROUP BY year_number
-                LIMIT 10;
-            '''
             result = db\
                 .query(
                     BirdsMaterialized.year_number,
@@ -66,13 +50,6 @@ def create_bird_plot(canton, bird_name, language, db: Session):
                 .limit(limit=10)\
                 .all()
         if not result:
-            command = '''
-                SELECT year_number, SUM(total_count)
-                FROM birds_materialized
-                WHERE species_name = %s
-                GROUP BY year_number
-                LIMIT 10;
-            '''
             result = db.query(BirdsMaterialized)\
                 .where(BirdsMaterialized.species_name == bird_name)\
                 .group_by(BirdsMaterialized.year_number)\

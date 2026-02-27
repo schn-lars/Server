@@ -1,11 +1,12 @@
 from sqlalchemy import Column, Integer, ForeignKey, Text, BigInteger, Numeric
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
 from decimal import Decimal
-from service.bird_session import BirdBase
+import uuid
+from service.session import Base
 from typing import Optional
-from service.location_session import LocationBase
 
-class Birds(BirdBase):
+class Birds(Base):
     __tablename__ = "birds"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -21,7 +22,7 @@ class Birds(BirdBase):
     year_number = Column(Integer, nullable=True)
 
 
-class Label(BirdBase):
+class Label(Base):
     __tablename__ = "labels"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -33,7 +34,7 @@ class Label(BirdBase):
         cascade="all, delete-orphan"
     )
 
-class BirdsMaterialized(BirdBase):
+class BirdsMaterialized(Base):
     __tablename__ = "birds_materialized"
 
     species_name = Column(Text, primary_key=True)
@@ -42,7 +43,7 @@ class BirdsMaterialized(BirdBase):
 
     total_count = Column(BigInteger)
 
-class Synonym(BirdBase):
+class Synonym(Base):
     __tablename__ = "synonyms"
 
     label_id = Column(
@@ -55,7 +56,7 @@ class Synonym(BirdBase):
 
     label = relationship("Label", back_populates="synonyms")
 
-class Adress(LocationBase):
+class Adress(Base):
     __tablename__ = "adresses"
 
     id = Column(Integer, primary_key=True)
@@ -68,3 +69,16 @@ class Adress(LocationBase):
     coord_x = Column(Numeric(18, 15), nullable=True)
     coord_y = Column(Numeric(18, 15), nullable=True)
     normalized_street = Column(Text)
+
+class SharedInformation(Base):
+    __tablename__ = "shared_information"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4())
+    coord_x = Column(Numeric(18, 15), nullable=True)
+    coord_y = Column(Numeric(18, 15), nullable=True)
+
+class RetrievedInformation(Base):
+    __tablename__ = "retrieved_information"
+
+    id = Column(UUID(as_uuid=True), ForeignKey("shared_information.id", ondelete="CASCADE"), primary_key=True, index=True)
+    json = Column(Text, nullable=False)
