@@ -1,5 +1,6 @@
 services:
   mini:
+    container_name: mini
     build: .
     ports:
       - "8000:8000"

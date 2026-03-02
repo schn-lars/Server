@@ -1,5 +1,6 @@
 services:
   smol:
+    container_name: smol
     build: .
     ports:
       - "8000:8000"
