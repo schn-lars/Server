@@ -67,7 +67,7 @@ async def run_inference(object: str, prompt: str, file: UploadFile = File(...)):
         print(f"Error during inference of model: {str(e)}")
         return None
 
-@app.post("/smol-general")
+@app.post("/general")
 async def run_smol_general(object: str, file: UploadFile = File(...)):
     GENERAL_CONTEXT_PROMPT = """
     Provide a description of this object using following attributes:
@@ -104,7 +104,7 @@ async def run_smol_general(object: str, file: UploadFile = File(...)):
         print(f"run_smol_general: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-@app.post("/smol-specific")
+@app.post("/specific")
 async def run_smol_specific(object: str, file: UploadFile = File(...)):
     SPECIFIC_CONTEXT_PROMPT = """
     Provide a detailed description of this object. What kind of object is it? How does it look like?
@@ -134,7 +134,7 @@ async def run_smol_specific(object: str, file: UploadFile = File(...)):
 '''
     This endpoint is designed for cropped images of posters that could potentially contain locations.
 '''
-@app.post("/smol-location")
+@app.post("/location")
 async def run_smol_location_extraction(object: str, file: UploadFile = File(...)):
     LOCATION_EXTRACTION_PROMPT = """
     Extract any adresses that are in the image in written form. Furthermore, if the image is located at a particular well-known location,

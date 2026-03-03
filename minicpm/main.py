@@ -44,7 +44,7 @@ async def load_model():
     model = model.eval().cuda()
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True, token=HUGGING_TOKEN)
 
-@app.post("/minicpm-general")
+@app.post("/general")
 async def run_minicpm_general(object: str, file: UploadFile = File(...)):
     GENERAL_CONTEXT_PROMPT = """
     Provide a description of this object using following attributes:
