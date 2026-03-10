@@ -26,8 +26,17 @@ def get_url_path(type: InferenceType):
         case InferenceType.LOCATION:
             return "location"
 
+with open("dog.jpeg", "rb") as f:
+    response = requests.post(
+        "http://10.34.64.211:8000/" + get_url_path(type=type),
+        params={"object": "dog"},
+        files={"file": ("dog-in-park.jpeg", f, "image/jpeg")}
+    )
+    print("General Request:")
+    print(response.json())
 
-from ultralytics import YOLO
+def export_yolo_model():
+    from ultralytics import YOLO
 
-model = YOLO("yolo26m-seg.pt")
-model.export(format="coreml")
+    model = YOLO("yoloe-26m-seg.pt")
+    model.export(format="coreml")
