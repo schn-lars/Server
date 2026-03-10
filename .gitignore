@@ -4,3 +4,4 @@
 *.pt
 .idea/*
 .coreml-env
+*.mlpackage
