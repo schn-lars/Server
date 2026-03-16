@@ -15,5 +15,6 @@ pyjokes
 google-search-results
 asyncio
 spark-nlp
+jwt
 pyspark
 ultralytics

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+from uuid import UUID
 
 class ReverseRequest(BaseModel):
     apikey: str
@@ -89,3 +90,22 @@ class ShareInformationRequest(BaseModel):
 class FetchSharedIdsRequest(BaseModel):
     coord_x: float
     coord_y: float
+
+
+class TokenData(BaseModel):
+    user_id: str | None = None
+
+    def get_uuid(self) -> UUID | None:
+        if self.user_id:
+            return UUID(self.user_id)
+        return None
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class UserRegistrationRequest(BaseModel):
+    username: str
+    password: str

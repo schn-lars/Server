@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, ForeignKey, Text, BigInteger, Numeric
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, ForeignKey, Text, BigInteger, Numeric, String, Float
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 from decimal import Decimal
 import uuid
@@ -74,6 +74,10 @@ class SharedInformation(Base):
     __tablename__ = "shared_information"
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4())
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"))
+    
+    object: Mapped[str] = mapped_column(String, nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False)
     coord_x = Column(Numeric(18, 15), nullable=True)
     coord_y = Column(Numeric(18, 15), nullable=True)
 
@@ -82,3 +86,11 @@ class RetrievedInformation(Base):
 
     id = Column(UUID(as_uuid=True), ForeignKey("shared_information.id", ondelete="CASCADE"), primary_key=True, index=True)
     json = Column(Text, nullable=False)
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4())
+    username: Mapped[str] = mapped_column(String, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    
