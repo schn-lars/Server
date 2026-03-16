@@ -6,6 +6,7 @@ from service.session import Base, engine
 from service.resources import clear_images, deletor
 from service.patchnotes import puller
 from service.entities import *
+from service.init_db import init_db
 
 # Routers
 from routers.bird import bird_api_router
@@ -19,6 +20,7 @@ from routers.shopping import shopping_api_router
 from routers.weather import weather_api_router
 from routers.utils import utils_api_router
 from routers.inference import inference_api_router
+from routers.users import users_api_router
 
 #Startup method which is being called when you start up application
 @asynccontextmanager
@@ -41,6 +43,7 @@ app.include_router(shopping_api_router)
 app.include_router(weather_api_router)
 app.include_router(utils_api_router)
 app.include_router(inference_api_router)
+app.include_router(users_api_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -52,6 +55,8 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 def startup():
+    init_db()
+
     global refresh_repo
     global gdf
     global image_deletion_dict

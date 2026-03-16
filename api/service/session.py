@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base, Session
 import os
 from typing import Annotated
 from fastapi import Depends
+from init_db import init_db
 
 db_name = os.getenv("POSTGRES_DB", "default_db")
 db_user = os.getenv("POSTGRES_USER", "default_user")
