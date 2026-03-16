@@ -22,7 +22,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-api:latest ./api
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/mr-moreintenso:latest ./api
 
       - name: Push Docker Image
         run: |
