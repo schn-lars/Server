@@ -5,3 +5,4 @@
 .idea/*
 .coreml-env
 *.mlpackage
+.DS_Store
