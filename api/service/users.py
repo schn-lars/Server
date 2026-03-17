@@ -11,6 +11,9 @@ from fastapi import Depends, status, HTTPException
 
 import jwt
 from jwt import PyJWTError
+from dotenv import load_dotenv
+
+load_dotenv("/app/.env")
 
 JWT_ENCODING = os.getenv("JWT_ENCODING")
 ALGORITHM = "HS256"

@@ -3,12 +3,14 @@ from sqlalchemy.orm import sessionmaker, declarative_base, Session
 import os
 from typing import Annotated
 from fastapi import Depends
-from init_db import init_db
+from dotenv import load_dotenv
+
+load_dotenv("/app/.env")
 
 db_name = os.getenv("POSTGRES_DB", "default_db")
 db_user = os.getenv("POSTGRES_USER", "default_user")
 db_password = os.getenv("POSTGRES_PASSWORD", "default_password")
-db_host = os.getenv("API_HOST", "default_host")
+db_host = os.getenv("DB_HOST", "default_host")
 db_port = os.getenv("DB_PORT", "5432")
 
 DATABASE_URL = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"

@@ -13,8 +13,10 @@ python-multipart
 EcoNameTranslator
 pyjokes
 google-search-results
+passlib
 asyncio
 spark-nlp
-jwt
+PyJWT
 pyspark
 ultralytics
+python-dotenv

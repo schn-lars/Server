@@ -2,10 +2,14 @@ from fastapi import APIRouter, Request
 import datetime
 from fastapi.responses import JSONResponse, FileResponse
 import os
+from dotenv import load_dotenv
 
 utils_api_router = APIRouter(
     prefix="/api/utils"
 )
+
+load_dotenv("/app/.env")
+
 SERPAPI_API_KEY = os.getenv("SERP_API_KEY", "5432")
 
 @utils_api_router.get("/help")

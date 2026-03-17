@@ -8,6 +8,9 @@ from fastapi.responses import JSONResponse
 import transformers
 print("TRANSFORMERS VERSION:", transformers.__version__)
 from transformers import AutoTokenizer, AutoModel
+from dotenv import load_dotenv
+
+load_dotenv("/app/.env")
 
 HUGGING_TOKEN = os.getenv('HUGGING_TOKEN')
 MODEL_ID = 'openbmb/MiniCPM-o-4_5' # MiniCPM-V-2_6 is Vision only apparently

@@ -6,7 +6,7 @@ from service.session import Base, engine
 from service.resources import clear_images, deletor
 from service.patchnotes import puller
 from service.entities import *
-from service.init_db import init_db
+from service.init_db import initialize_db
 
 # Routers
 from routers.bird import bird_api_router
@@ -55,7 +55,7 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 def startup():
-    init_db()
+    initialize_db()
 
     global refresh_repo
     global gdf

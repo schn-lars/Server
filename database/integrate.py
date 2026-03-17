@@ -5,6 +5,9 @@ from PIL import Image
 import torch
 from EcoNameTranslator import to_species, to_scientific
 import os
+from dotenv import load_dotenv
+
+load_dotenv("/app/.env")
 
 preprocessor = EfficientNetImageProcessor.from_pretrained("dennisjooo/Birds-Classifier-EfficientNetB2")
 model = EfficientNetForImageClassification.from_pretrained("dennisjooo/Birds-Classifier-EfficientNetB2")

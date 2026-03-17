@@ -4,8 +4,8 @@ from typing import Annotated
 from fastapi.responses import JSONResponse
 from service.session import get_db
 from sqlalchemy.orm import Session
-from ..service.requestforms import UserRegistrationRequest, Token
-from ..service import users
+from service.requestforms import UserRegistrationRequest, Token
+from service import users
 
 users_api_router = APIRouter(
     prefix="/api/users"

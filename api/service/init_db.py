@@ -1,10 +1,10 @@
-from entities import User
-from users import register_user
+from .entities import User
+from .users import register_user
 
-from session import SessionLocal
+from .session import SessionLocal
 
 
-def init_db():
+def initialize_db():
     db = SessionLocal()
     try:
         user = db.query(User).filter(User.username == "Guest").first()

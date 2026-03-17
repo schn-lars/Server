@@ -5,6 +5,9 @@ from datetime import datetime
 from typing import Optional
 import threading
 import os
+from dotenv import load_dotenv
+
+load_dotenv("/app/.env")
 
 refresh_repo = True
 LOG_FILE = Path("../resources/commits.txt")
