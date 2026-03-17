@@ -1,7 +1,11 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from fastapi.responses import JSONResponse
 from service.requestforms import ShareData, UUIDPayload
 import threading
+from service import share
+from service.session import get_db
+from service.users import CurrentUser
+from sqlalchemy.orm import Session
 
 share_api_router = APIRouter(
     prefix="/api/share"
@@ -24,7 +28,7 @@ async def fetch(
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 @share_api_router.post("/share")
-async def share(
+async def share_info(
         request: Request
     ):
     try:
@@ -46,5 +50,37 @@ async def exitshare(
         with share_lock_holmes:
             shared_items.pop(payload.uuid)
             print(f"Current state of shared infos: {shared_items.keys()}")
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@share_api_router.post("/unpublish-info")
+async def unpublish_shared_information(
+        current_user: CurrentUser,
+        shared_info_id: str,
+        db: Session = Depends(get_db),
+    ):
+    try:
+        share.unpublish_shared_information(
+            current_user=current_user,
+            shared_info_id=shared_info_id,
+            db=db,
+        )
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@share_api_router.post("/publish-info")
+async def publish_shared_information(
+        current_user: CurrentUser,
+        shared_info_id: str,
+        db: Session = Depends(get_db),
+    ):
+    try:
+        share.publish_shared_information(
+            current_user=current_user,
+            shared_info_id=shared_info_id,
+            db=db,
+        )
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
