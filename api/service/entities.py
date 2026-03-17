@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, Text, BigInteger, Numeric, String, Float
+from sqlalchemy import Column, Integer, ForeignKey, Text, BigInteger, Numeric, String, Float, Boolean
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 from decimal import Decimal
@@ -78,6 +78,7 @@ class SharedInformation(Base):
     
     object: Mapped[str] = mapped_column(String, nullable=False)
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
+    public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     coord_x = Column(Numeric(18, 15), nullable=True)
     coord_y = Column(Numeric(18, 15), nullable=True)
 
@@ -93,4 +94,9 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4())
     username: Mapped[str] = mapped_column(String, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+
+class ShareMapping(Base):
+    __tablename__ = "share_mappings"
     
+    shared_to_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, index=True, default=uuid.uuid4())
+    info_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("shared_information.id", ondelete="CASCADE"), primary_key=True, index=True, default=uuid.uuid4())
