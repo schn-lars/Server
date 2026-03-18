@@ -10,8 +10,8 @@ load_dotenv("/app/.env")
 db_name = os.getenv("POSTGRES_DB", "default_db")
 db_user = os.getenv("POSTGRES_USER", "default_user")
 db_password = os.getenv("POSTGRES_PASSWORD", "default_password")
-db_host = os.getenv("DB_HOST", "default_host")
-db_port = os.getenv("DB_PORT", "5432")
+db_host = os.getenv("POSTGRES_HOST", "default_host")
+db_port = os.getenv("POSTGRES_PORT", "5432")
 
 DATABASE_URL = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
