@@ -21,7 +21,7 @@ services:
     container_name: watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 300
+    command: --interval 300 --cleanup --rolling-restart api
     restart: always
   db:
     image: postgres:16
