@@ -53,7 +53,7 @@ def create_access_token(userid: UUID, expiration: timedelta) -> str:
 
 
 def register_user(username: str, password: str, db: Session):
-    if 6 > len(password) or 12 < len(password):
+    if 6 > len(password) or 20 < len(password):
         raise Exception("Password must be between 6 and 20 characters.")
     
     other_user = db.query(User).filter(User.username == username).first()
