@@ -12,6 +12,7 @@ def initialize_db():
             register_user(
                 username="Guest",
                 password="GuestPassword",
+                db=db,
             )
             print("Successfully initialized the database.")
         else:
