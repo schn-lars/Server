@@ -95,7 +95,7 @@ class RetrievedInformation(Base):
     __tablename__ = "retrieved_information"
 
     id = Column(UUID(as_uuid=True), ForeignKey("shared_information.id", ondelete="CASCADE"), primary_key=True, index=True)
-    json = Column(Text, nullable=False)
+    content_json = Column(Text, nullable=False)
 
 
 class ShareMapping(Base):

@@ -26,7 +26,7 @@ def insert_shared_information(request: ShareInformationRequest, db: Session):
         )
         retrieved_info = RetrievedInformation(
             id=UUID(request.id),
-            json=request.json
+            content_json=request.json
         )
         db.add_all([shared_info, retrieved_info])
         db.commit()
