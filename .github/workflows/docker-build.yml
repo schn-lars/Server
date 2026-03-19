@@ -33,6 +33,5 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/mr-moreintenso:latest
-            ${{ secrets.DOCKER_USERNAME }}/mr-moreintenso:${{ github.run_number }}
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/mr-moreintenso:cache
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/mr-moreintenso:cache,mode=max
