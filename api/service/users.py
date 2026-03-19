@@ -17,7 +17,7 @@ load_dotenv("/app/.env")
 
 JWT_ENCODING = os.getenv("JWT_ENCODING")
 ALGORITHM = "HS256"
-TOKEN_TTL_IN_MINS = 30
+TOKEN_TTL_IN_MINS = 131400 # 6 Months, do not do this usually
 
 oauth_bearer = OAuth2PasswordBearer(tokenUrl="api/auth/token")
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

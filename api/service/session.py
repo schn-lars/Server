@@ -25,7 +25,7 @@ for i in range(10):
         break
     except Exception as e:
         print(f"DB not ready, retrying... ({i})", e)
-        time.sleep(3)
+        time.sleep(10)
 
 if engine is None:
     raise RuntimeError("Could not connect to database after retries")
