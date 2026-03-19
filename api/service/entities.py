@@ -70,11 +70,20 @@ class Adress(Base):
     coord_y = Column(Numeric(18, 15), nullable=True)
     normalized_street = Column(Text)
 
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4())
+    username: Mapped[str] = mapped_column(String, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    
+
 class SharedInformation(Base):
     __tablename__ = "shared_information"
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4())
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"))
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
     
     object: Mapped[str] = mapped_column(String, nullable=False)
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
@@ -88,12 +97,6 @@ class RetrievedInformation(Base):
     id = Column(UUID(as_uuid=True), ForeignKey("shared_information.id", ondelete="CASCADE"), primary_key=True, index=True)
     json = Column(Text, nullable=False)
 
-class User(Base):
-    __tablename__ = "users"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4())
-    username: Mapped[str] = mapped_column(String, nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
 
 class ShareMapping(Base):
     __tablename__ = "share_mappings"
