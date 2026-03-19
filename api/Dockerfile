@@ -1,5 +1,5 @@
 # Use Python 3.10 (or your target version)
-FROM python:latest
+FROM python:3.10-slim
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -16,14 +16,16 @@ RUN apt-get update && apt-get install -y \
 # Set working dir
 WORKDIR /app
 
-# Copy app code
-COPY . /app
+COPY requirements.txt .
 
 # Install Python deps
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
+# Copy rest of the code
+COPY . /app
+
 EXPOSE 6969
 
 # Launch FastAPI
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "6969", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "6969"]
