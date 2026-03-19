@@ -5,7 +5,8 @@ services:
     ports:
       - "6969:6969"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart:
       always
     environment:
@@ -24,7 +25,7 @@ services:
     command: --interval 300 --cleanup --rolling-restart api
     restart: always
   db:
-    image: postgres:16
+    build: ./database
     container_name: db
     restart: always
     environment:
@@ -35,6 +36,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   spark:
     build: ./spark

@@ -61,6 +61,8 @@ def startup():
     global gdf
     global image_deletion_dict
     print("Starting with startup...")
+    Base.metadata.create_all(bind=engine)
+    
     puller_thread = threading.Thread(target=puller, daemon=True)
     puller_thread.start()
 

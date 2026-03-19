@@ -1,6 +1,6 @@
-FROM postgres:latest
+FROM postgres:16
 
-COPY mydump.dump /docker-entrypoint-initdb.d/
+COPY db.dump /docker-entrypoint-initdb.d/
 COPY restore.sh /docker-entrypoint-initdb.d/
 
 EXPOSE 5432
