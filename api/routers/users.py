@@ -24,9 +24,7 @@ def register_user(
             db=db)
         return {
             "status": True,
-            "message": """
-                Registration was successful.
-            """,
+            "message": "Registration was successful.",
         }
     except Exception as e:
         print(f"register_user: ERROR {str(e)}")
