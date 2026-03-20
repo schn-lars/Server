@@ -51,7 +51,7 @@ async def login_to_get_access_token(
 async def get_users(
         current_user: CurrentUser,
         search_query: str,
-        db: Session
+        db: Session = Depends(get_db)
     ):
     try:
         return users.get_users(
