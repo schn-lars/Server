@@ -37,7 +37,7 @@ def authenticate_user_with_username(
     if not user:
         print(f"No matching user has been found for {username}")
         return None
-    if not verify_password(raw_password=raw_password, hash_password=user.password_hash):
+    if not verify_password(raw_password=raw_password, hash_password=user.hashed_password):
         print(f"Password does not match for {username}")
         return None
     return user
