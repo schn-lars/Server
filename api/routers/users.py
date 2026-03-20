@@ -30,7 +30,7 @@ def register_user(
         }
     except Exception as e:
         print(f"register_user: ERROR {str(e)}")
-        raise HTTPException(status_code=400, detail=e.message)
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @users_api_router.post("/login", response_model=Token)
