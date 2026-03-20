@@ -1,5 +1,6 @@
 from .entities import User
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 import os
@@ -111,3 +112,22 @@ def login_to_get_access_token(
     except Exception as e:
         print(str(e))
         raise Exception("Error fetching access token!")
+
+
+def get_users(
+        current_user: CurrentUser,
+        search_query: str,
+        db: Session
+    ):
+    user_rows = db.execute(
+        select(User.username, User.id)
+        .where(User.username.ilike(f"{search_query}%"))
+        .where(User.id != current_user.get_uuid())
+        .limit(20)
+    )
+
+    users = [
+        {"username" : username , "user_id" : id } for username, id in user_rows
+    ]
+
+    return { "users" : users }

@@ -84,3 +84,72 @@ async def publish_shared_information(
         )
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@share_api_router.get("/priviledged-users")
+async def fetch_priviledged_users(
+        current_user: CurrentUser,
+        info_id: str,
+        search_query: str = "",
+        db: Session = Depends(get_db)
+    ):
+    try:
+        share.fetch_priviledged_users(
+            current_user=current_user,
+            info_id=info_id,
+            db=db,
+            search_query=search_query
+        )
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@share_api_router.post("/remove-priviledged")
+async def remove_all_priviledged_users(
+        current_user: CurrentUser,
+        info_id: str,
+        db: Session = Depends(get_db)
+    ):
+    try:
+        share.remove_all_priviledged_users(
+            current_user=current_user,
+            info_id=info_id,
+            db=db
+        )
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+@share_api_router.post("/add-priviledged-user")
+async def add_user_to_shared_information(
+        current_user: CurrentUser,
+        user_id: str,
+        shared_info_id: str,
+        db: Session = Depends(get_db)
+    ):
+    try:
+        share.add_user_to_shared_information(
+            current_user=current_user,
+            user_id=user_id,
+            shared_info_id=shared_info_id,
+            db=db
+        )
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@share_api_router.post("/add-priviledged-user")
+async def remove_user_from_shared_information(
+        current_user: CurrentUser,
+        user_id: str,
+        shared_info_id: str,
+        db: Session = Depends(get_db)
+    ):
+    try:
+        share.remove_user_from_shared_information(
+            current_user=current_user,
+            user_id=user_id,
+            shared_info_id=shared_info_id,
+            db=db
+        )
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)

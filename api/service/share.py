@@ -1,3 +1,4 @@
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import UUID
 from service.requestforms import ShareInformationRequest, FetchSharedIdsRequest
@@ -120,3 +121,45 @@ def unpublish_shared_information(current_user: CurrentUser, shared_info_id: str,
         db.commit()
     else:
         print("Information is either already not public or does not belong to this user.")
+
+
+def fetch_priviledged_users(
+        current_user: CurrentUser,
+        info_id: str,
+        db: Session,
+        search_query: str = "",
+    ):
+    info = db.query(SharedInformation).get(info_id)
+    if info is None or info.user_id != current_user.get_uuid():
+        raise Exception("This information does not exist or does not belong to you.")
+
+    rows = db.execute(
+        select(User.username, User.id)
+        .join(User, User.id == ShareMapping.shared_to_id)
+        .where(ShareMapping.info_id == info_id)
+        .where(User.username.ilike(f"{search_query}%"))
+        .limit(20)
+    )
+
+    privledged_users = [
+        {"username" : username, "user_id" : id } for username, id in rows
+    ]
+    return { "priviledged_users" : privledged_users }
+
+
+def remove_all_priviledged_users(
+        current_user: CurrentUser,
+        info_id: str,
+        db: Session
+    ):
+    info = db.query(SharedInformation).get(info_id)
+    if info is None or info.user_id != current_user.get_uuid():
+        raise Exception("This information does not exist or does not belong to you.")
+    
+    db.execute(
+        delete(ShareMapping)
+        .where(ShareMapping.info_id == info_id)
+    )
+    db.commit()
+
+

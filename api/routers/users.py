@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 from fastapi.responses import JSONResponse
 from service.session import get_db
+from service.users import CurrentUser
 from sqlalchemy.orm import Session
 from service.requestforms import UserRegistrationRequest, Token
 from service import users
@@ -43,4 +44,23 @@ async def login_to_get_access_token(
         raise HTTPException(
             status_code=401,
             detail="Username and password do not match!",
+        )
+
+
+@users_api_router.get("/search")
+async def get_users(
+        current_user: CurrentUser,
+        search_query: str,
+        db: Session
+    ):
+    try:
+        return users.get_users(
+            current_user=current_user,
+            search_query=search_query,
+            db=db
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=401,
+            detail=str(e),
         )
