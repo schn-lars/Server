@@ -52,3 +52,7 @@ async def sam3_segment_with_bounding_boxes(file: UploadFile, boxes: list[int]):
     results = SAMv3_SEG(boxes=boxes)
     print(results)
     return results
+
+
+def save_result_image_to_disk():
+    pass
