@@ -1,6 +1,7 @@
 from ultralytics.models.sam import SAM3SemanticPredictor
 from ultralytics import YOLO
 import base64
+import time
 from PIL import Image
 import io
 from fastapi import UploadFile
@@ -24,15 +25,15 @@ async def yolo_26_segmentation_prediction(file: UploadFile):
     contents = await file.read()
     img = Image.open(io.BytesIO(contents)).convert("RGB")
     results = YOLOv26_SEG.predict(img)
-    print(results)
+    save_result_image_to_disk(model='YOLO26-SEG', results=results)
     return results
 
 async def yolo_26_detection_prediction(file: UploadFile):
     print(f"Starting inference for YOLOv26 - DETECTION")
     contents = await file.read()
     img = Image.open(io.BytesIO(contents)).convert("RGB")
-    results = YOLOv26_SEG.predict(img)
-    print(results)
+    results = YOLOv26_DET.predict(img)
+    save_result_image_to_disk(model='YOLO26-DET', results=results)
     return results
 
 async def sam3_segment_with_text_prompts(file: UploadFile, text: list[str]):
@@ -41,7 +42,7 @@ async def sam3_segment_with_text_prompts(file: UploadFile, text: list[str]):
     img = Image.open(io.BytesIO(contents)).convert("RGB")
     SAMv3_SEG.set_image(img)
     results = SAMv3_SEG(text=text)
-    print(results)
+    save_result_image_to_disk(model='SAM3-TEXT', results=results)
     return results
 
 async def sam3_segment_with_bounding_boxes(file: UploadFile, boxes: list[int]):
@@ -50,9 +51,10 @@ async def sam3_segment_with_bounding_boxes(file: UploadFile, boxes: list[int]):
     img = Image.open(io.BytesIO(contents)).convert("RGB")
     SAMv3_SEG.set_image(img)
     results = SAMv3_SEG(boxes=boxes)
-    print(results)
+    save_result_image_to_disk(model='SAM3-SEG', results=results)
     return results
 
 
-def save_result_image_to_disk():
-    pass
+def save_result_image_to_disk(model: str, results):
+    annotated = results[0].plot()
+    Image.fromarray(annotated).save(f"{model}-{time.time()}.jpg")
