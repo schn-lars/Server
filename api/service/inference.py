@@ -28,6 +28,13 @@ async def yolo_26_segmentation_prediction(file: UploadFile):
     save_result_image_to_disk(model='YOLO26-SEG', results=results)
     return results
 
+async def yolo_26_segmentation_prediction(frame):
+    print(f"Starting inference for YOLOv26 LIVE - SEGMENTATION")
+    img = Image.open(io.BytesIO(frame)).convert("RGB")
+    results = YOLOv26_SEG.predict(img)
+    save_result_image_to_disk(model='YOLO26-SEG', results=results)
+    return results
+
 async def yolo_26_detection_prediction(file: UploadFile):
     print(f"Starting inference for YOLOv26 - DETECTION")
     contents = await file.read()
