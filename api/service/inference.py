@@ -64,4 +64,4 @@ async def sam3_segment_with_bounding_boxes(file: UploadFile, boxes: list[int]):
 
 def save_result_image_to_disk(model: str, results):
     annotated = results[0].plot()
-    Image.fromarray(annotated).save(f"outputs/{model}-{time.time()}.jpg")
+    Image.fromarray(annotated).save(f"/outputs/{model}-{time.time()}.jpg")
