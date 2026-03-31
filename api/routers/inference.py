@@ -53,7 +53,7 @@ async def yolov26_websocket_inference(websocket: WebSocket):
             r = results[0]
 
             await websocket.send_json({
-                "type": "det",
+                "type": "detection",
                 "observations": [
                     {
                         "id": str(uuid.uuid4()),
@@ -67,8 +67,7 @@ async def yolov26_websocket_inference(websocket: WebSocket):
                         },
                         "worldPosition": None
                     }
-                    for i, (x1, y1, x2, y2), s, c in zip(
-                        range(len(r.boxes.xyxy)),
+                    for (x1, y1, x2, y2), s, c in zip(
                         r.boxes.xyxy.tolist(),
                         r.boxes.conf.tolist(),
                         r.boxes.cls.tolist()
