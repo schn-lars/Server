@@ -20,3 +20,4 @@ PyJWT
 pyspark
 ultralytics
 python-dotenv
+websockets
