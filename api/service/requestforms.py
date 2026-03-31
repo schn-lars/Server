@@ -85,7 +85,7 @@ class ShareInformationRequest(BaseModel):
     id: str
     coord_x: float
     coord_y: float
-    json: str
+    content_json: str
 
 class FetchSharedIdsRequest(BaseModel):
     coord_x: float
