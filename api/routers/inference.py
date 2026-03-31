@@ -52,9 +52,27 @@ async def yolov26_websocket_inference(websocket: WebSocket):
             r = results[0]
 
             await websocket.send_json({
-                "boxes": r.boxes.xyxy.tolist(),
-                "scores": r.boxes.conf.tolist(),
-                "classes": r.boxes.cls.tolist()
+                "type": "detection",
+                "observations": [
+                    {
+                        "id": str(i),
+                        "label": str(int(c)),
+                        "confidence": float(s),
+                        "bbox": {
+                            "x": float(x1),
+                            "y": float(y1),
+                            "width": float(x2 - x1),
+                            "height": float(y2 - y1)
+                        },
+                        "worldPosition": None
+                    }
+                    for i, (x1, y1, x2, y2), s, c in zip(
+                        range(len(r.boxes.xyxy)),
+                        r.boxes.xyxy.tolist(),
+                        r.boxes.conf.tolist(),
+                        r.boxes.cls.tolist()
+                    )
+                ]
             })
     await asyncio.gather(receiver(), processor())
 
