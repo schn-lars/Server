@@ -44,12 +44,17 @@ async def yolov26_websocket_inference(websocket: WebSocket):
             frame = latest_frame
             latest_frame = None
 
-            results = inference.yolo_26_segmentation_prediction(frame=frame)
+            results = await asyncio.to_thread(
+                inference.yolo_26_segmentation_prediction,
+                frame
+            )
+
+            r = results[0]
 
             await websocket.send_json({
-                "boxes": results[0].boxes.xyxy.tolist(),
-                "scores": results[0].boxes.conf.tolist(),
-                "classes": results[0].boxes.cls.tolist()
+                "boxes": r.boxes.xyxy.tolist(),
+                "scores": r.boxes.conf.tolist(),
+                "classes": r.boxes.cls.tolist()
             })
     await asyncio.gather(receiver(), processor())
 
