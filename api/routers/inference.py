@@ -4,6 +4,7 @@ from fastapi import WebSocket
 import asyncio
 from service import inference
 import json
+import uuid
 
 inference_api_router = APIRouter(
     prefix="/api/inference"
@@ -52,10 +53,10 @@ async def yolov26_websocket_inference(websocket: WebSocket):
             r = results[0]
 
             await websocket.send_json({
-                "type": "detection",
+                "type": "det",
                 "observations": [
                     {
-                        "id": str(i),
+                        "id": str(uuid.uuid4()),
                         "label": str(int(c)),
                         "confidence": float(s),
                         "bbox": {

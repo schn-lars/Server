@@ -16,8 +16,8 @@ overrides = dict(
     save=False
 )
 
-YOLOv26_SEG = YOLO("yolo26m-seg.pt")
-YOLOv26_DET = YOLO("yolo26m.pt")
+YOLOv26_SEG = YOLO("yolo26s-seg.pt")
+YOLOv26_DET = YOLO("yolo26s.pt")
 SAMv3_SEG = SAM3SemanticPredictor(overrides=overrides)
 
 async def yolo_26_segmentation_prediction(file: UploadFile):
