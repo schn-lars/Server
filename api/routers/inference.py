@@ -12,7 +12,7 @@ inference_api_router = APIRouter(
 #
 #   This is supposed to make segmentation returning masks seen in an image.
 #
-@inference_api_router.post("/yolov26-segmentation")
+@inference_api_router.post("/YOLOv26-seg")
 async def yolo_26_segmentation_prediction(file: UploadFile = File(...)):
     try:
         results = await inference.yolo_26_segmentation_prediction(file=file)
@@ -22,7 +22,7 @@ async def yolo_26_segmentation_prediction(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="YOLOv26 Segmentation Prediction has failed!")
 
 
-@inference_api_router.websocket("/ws/yolov26-segmentation")
+@inference_api_router.websocket("/ws/YOLOv26-seg")
 async def yolov26_websocket_inference(websocket: WebSocket):
     await websocket.accept()
 
@@ -56,7 +56,7 @@ async def yolov26_websocket_inference(websocket: WebSocket):
 #
 #   This is supposed to make predictions returning bounding boxes.
 #
-@inference_api_router.post("/yolov26-detection")
+@inference_api_router.post("/YOLOv26-det")
 async def yolo_26_detection_prediction(file: UploadFile = File(...)):
     try:
         results = await inference.yolo_26_detection_prediction(file=file)
@@ -65,7 +65,7 @@ async def yolo_26_detection_prediction(file: UploadFile = File(...)):
         print(f"Error in yolo_26_detection_prediction(): {str(e)}")
         raise HTTPException(status_code=500, detail="YOLOv26 Detection Prediction has failed!")
 
-@inference_api_router.post("/sam3-prompted")
+@inference_api_router.post("/SAM3-prompted")
 async def sam3_segment_with_text_prompts(file: UploadFile = File(...), text: list[str] = Form(...)):
     try:
         text = await json.loads(text)
@@ -75,7 +75,7 @@ async def sam3_segment_with_text_prompts(file: UploadFile = File(...), text: lis
         print(f"Error in sam3_segment_with_text_prompts(): {str(e)}")
         raise HTTPException(status_code=500, detail="SAM3-TXT Prediction has failed!")
 
-@inference_api_router.post("/sam3-boxed")
+@inference_api_router.post("/SAM3-boxed")
 async def sam3_segment_with_bounding_boxes(file: UploadFile = File(...), boxes: list[int] = Form(...)):
     try:
         text = await json.loads(text)
