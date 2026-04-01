@@ -16,6 +16,14 @@ overrides = dict(
     save=False
 )
 
+SAM3_DEFAULT_PROMPT= '''
+    You are an agent which is used by a VR headset. Your goal is to identify as many objects as you possibly can.
+    Make sure that you return only the objects you are more than 60 percent sure about.
+    Try to categorize the returned objects in somewhat logical labels.
+    An example for labels we are NOT interested in are: ['blue book', 'green book', 'book with colorful cover', 'poster'],
+    instead we want to have the label-set ['book', 'poster'].
+'''
+
 YOLOv26_SEG = YOLO("yolo26s-seg.pt")
 YOLOv26_DET = YOLO("yolo26s.pt")
 SAMv3_SEG = SAM3SemanticPredictor(overrides=overrides)
@@ -32,7 +40,6 @@ def yolo_26_segmentation_prediction(frame):
     print(f"Starting inference for YOLOv26 LIVE - SEGMENTATION")
     img = Image.open(io.BytesIO(frame)).convert("RGB")
     results = YOLOv26_SEG.predict(img)
-    save_result_image_to_disk(model='YOLO26-SEG', results=results)
     return results
 
 async def yolo_26_detection_prediction(file: UploadFile):
@@ -43,10 +50,18 @@ async def yolo_26_detection_prediction(file: UploadFile):
     save_result_image_to_disk(model='YOLO26-DET', results=results)
     return results
 
-async def sam3_segment_with_text_prompts(file: UploadFile, text: list[str]):
+async def sam3_segment_with_text_prompts(file: UploadFile, text: list[str] = [SAM3_DEFAULT_PROMPT]):
     print(f"Starting inference for SAM3 - TEXTUAL PROMPTS")
     contents = await file.read()
     img = Image.open(io.BytesIO(contents)).convert("RGB")
+    SAMv3_SEG.set_image(img)
+    results = SAMv3_SEG(text=text)
+    save_result_image_to_disk(model='SAM3-TEXT', results=results)
+    return results
+
+def sam3_segment_with_text_prompts(frame, text: list[str] = [SAM3_DEFAULT_PROMPT]):
+    print(f"Starting WS inference for SAM3 - TEXTUAL PROMPTS")
+    img = Image.open(io.BytesIO(frame)).convert("RGB")
     SAMv3_SEG.set_image(img)
     results = SAMv3_SEG(text=text)
     save_result_image_to_disk(model='SAM3-TEXT', results=results)
