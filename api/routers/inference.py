@@ -74,7 +74,14 @@ async def yolov26_websocket_inference(websocket: WebSocket):
                     )
                 ]
             })
-    await asyncio.gather(receiver(), processor())
+    try:
+        await asyncio.gather(receiver(), processor())
+    except WebSocketDisconnect:
+        print("YOLOv26-seg: Client disconnected cleanly")
+    except Exception as e:
+        print("YOLOv26-seg: WebSocket error:", e)
+    finally:
+        print("YOLOv26-seg: Cleaning up session")
 
 @inference_api_router.websocket("/ws/SAM3-seg")
 async def sam3_segmentation_websocket_inference(websocket: WebSocket):
