@@ -4,6 +4,7 @@ import base64
 import time
 from PIL import Image
 import io
+import uuid
 from fastapi import UploadFile
 
 # https://docs.ultralytics.com/models/sam-3/#segment-with-text-prompts
@@ -24,57 +25,99 @@ SAM3_DEFAULT_PROMPT= '''
     instead we want to have the label-set ['book', 'poster'].
 '''
 
-YOLOv26_SEG = YOLO("yolo26s-seg.pt")
-YOLOv26_DET = YOLO("yolo26s.pt")
-SAMv3_SEG = SAM3SemanticPredictor(overrides=overrides)
+class InferenceSession:
+    def __init__(self):
+        self.model_type = None
+        self.prompt = [SAM3_DEFAULT_PROMPT]
+        self.sam_predictor = None
+        self.yolo_model = None
+        self.task = None
+    
+    # might be useful
+    def has_default_prompt(self) -> bool:
+        return self.prompt == [SAM3_DEFAULT_PROMPT]
 
-async def yolo_26_segmentation_prediction(file: UploadFile):
-    print(f"Starting inference for YOLOv26 - SEGMENTATION")
-    contents = await file.read()
-    img = Image.open(io.BytesIO(contents)).convert("RGB")
-    results = YOLOv26_SEG.predict(img)
-    save_result_image_to_disk(model='YOLO26-SEG', results=results)
-    return results
+    def load_model(self, model_type: str):
+        if model_type == "yolo_seg":
+            self.yolo_model = YOLO("yolo26s-seg.pt")
+            self.model_type = model_type
+            self.task = 'segmentation'
 
-def yolo_26_segmentation_prediction(frame):
-    print(f"Starting inference for YOLOv26 LIVE - SEGMENTATION")
-    img = Image.open(io.BytesIO(frame)).convert("RGB")
-    results = YOLOv26_SEG.predict(img)
-    return results
+        elif model_type == "yolo_det":
+            self.yolo_model = YOLO("yolo26s.pt")
+            self.model_type = model_type
+            self.task = 'detection'
 
-async def yolo_26_detection_prediction(file: UploadFile):
-    print(f"Starting inference for YOLOv26 - DETECTION")
-    contents = await file.read()
-    img = Image.open(io.BytesIO(contents)).convert("RGB")
-    results = YOLOv26_DET.predict(img)
-    save_result_image_to_disk(model='YOLO26-DET', results=results)
-    return results
+        elif model_type == "sam_text":
+            self.sam_predictor = SAM3SemanticPredictor(overrides=overrides)
+            self.model_type = model_type
+            self.task = 'segmentation'
 
-async def sam3_segment_with_text_prompts(file: UploadFile, text: list[str] = [SAM3_DEFAULT_PROMPT]):
-    print(f"Starting inference for SAM3 - TEXTUAL PROMPTS")
-    contents = await file.read()
-    img = Image.open(io.BytesIO(contents)).convert("RGB")
-    SAMv3_SEG.set_image(img)
-    results = SAMv3_SEG(text=text)
-    save_result_image_to_disk(model='SAM3-TEXT', results=results)
-    return results
+        else:
+            raise ValueError("Unknown model")
 
-def sam3_segment_with_text_prompts(frame, text: list[str] = [SAM3_DEFAULT_PROMPT]):
-    print(f"Starting WS inference for SAM3 - TEXTUAL PROMPTS")
-    img = Image.open(io.BytesIO(frame)).convert("RGB")
-    SAMv3_SEG.set_image(img)
-    results = SAMv3_SEG(text=text)
-    save_result_image_to_disk(model='SAM3-TEXT', results=results)
-    return results
+    def predict(self, frame: bytes):
+        img = Image.open(io.BytesIO(frame)).convert("RGB")
 
-async def sam3_segment_with_bounding_boxes(file: UploadFile, boxes: list[int]):
-    print(f"Starting inference for SAM3 - BOUNDING BOXES")
-    contents = await file.read()
-    img = Image.open(io.BytesIO(contents)).convert("RGB")
-    SAMv3_SEG.set_image(img)
-    results = SAMv3_SEG(boxes=boxes)
-    save_result_image_to_disk(model='SAM3-SEG', results=results)
-    return results
+        if self.model_type == "yolo_seg":
+            results = self.yolo_model.predict(img)
+            r = results[0]
+            return {
+                "type": "segmentation",
+                "observations": [
+                    {
+                        "id": str(uuid.uuid4()),
+                        "label": str(int(c)),
+                        "confidence": float(s),
+                        "bbox": {
+                            "x": float(x1),
+                            "y": float(y1),
+                            "width": float(x2 - x1),
+                            "height": float(y2 - y1)
+                        },
+                        "worldPosition": None
+                    }
+                    for (x1, y1, x2, y2), s, c in zip(
+                        r.boxes.xyxy.tolist(),
+                        r.boxes.conf.tolist(),
+                        r.boxes.cls.tolist()
+                    )
+                ]
+            }
+
+
+        elif self.model_type == "yolo_det":
+            result = self.yolo_model.predict(img)
+            r = result[0]
+            return {
+                "type": "segmentation",
+                "observations": [
+                    {
+                        "id": str(uuid.uuid4()),
+                        "label": str(int(c)),
+                        "confidence": float(s),
+                        "bbox": {
+                            "x": float(x1),
+                            "y": float(y1),
+                            "width": float(x2 - x1),
+                            "height": float(y2 - y1)
+                        },
+                        "worldPosition": None
+                    }
+                    for (x1, y1, x2, y2), s, c in zip(
+                        r.boxes.xyxy.tolist(),
+                        r.boxes.conf.tolist(),
+                        r.boxes.cls.tolist()
+                    )
+                ]
+            }
+
+        elif self.model_type == "sam_text":
+            self.sam_predictor.set_image(img)
+            return self.sam_predictor(text=self.prompt)
+
+        else:
+            raise RuntimeError("Model not loaded")
 
 
 def save_result_image_to_disk(model: str, results):

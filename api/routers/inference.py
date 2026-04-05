@@ -2,198 +2,63 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi import WebSocket, WebSocketDisconnect
 import asyncio
+from users import CurrentUser
 from service import inference
 import json
 import uuid
+from inference import InferenceSession
 
 inference_api_router = APIRouter(
     prefix="/api/inference"
 )
 
-#
-#   This is supposed to make segmentation returning masks seen in an image.
-#
-@inference_api_router.post("/YOLOv26-seg")
-async def yolo_26_segmentation_prediction(file: UploadFile = File(...)):
-    try:
-        results = await inference.yolo_26_segmentation_prediction(file=file)
-        return JSONResponse(content={"results": results}, status_code=200)
-    except Exception as e:
-        print(f"Error in yolo_26_segmentation_prediction(): {str(e)}")
-        raise HTTPException(status_code=500, detail="YOLOv26 Segmentation Prediction has failed!")
 
-
-@inference_api_router.websocket("/ws/YOLOv26-seg")
-async def yolov26_websocket_inference(websocket: WebSocket):
+@inference_api_router.websocket("/ws/inference")
+async def inference_ws(current_user: CurrentUser, websocket: WebSocket):
     await websocket.accept()
 
-    latest_frame = None
+    session = InferenceSession()
 
-    async def receiver():
-        nonlocal latest_frame
-        while True: # overwriting new frames
-            data = await websocket.receive_bytes()
-            latest_frame = data
-
-    async def processor():
-        nonlocal latest_frame
+    try:
         while True:
-            if latest_frame is None:
-                await asyncio.sleep(0.01)
-                continue
+            message = await websocket.receive()
 
-            frame = latest_frame
-            latest_frame = None
+            # upon receival of text, this is mostly yused for controls and settings of the current session
+            if "text" in message:
+                data = json.loads(message["text"])
+                msg_type = data.get("type")
 
-            results = await asyncio.to_thread(
-                inference.yolo_26_segmentation_prediction,
-                frame
-            )
+                if msg_type == "init":
+                    session.load_model(data["model"])
+                    await websocket.send_json({"status": "model_loaded"})
 
-            r = results[0]
+                elif msg_type == "set_prompt":
+                    # Make sure, that 'prompt' is already a list of the current prompts we are using!
+                    session.prompt = data.get("prompt", inference.SAM3_DEFAULT_PROMPT)
+                    await websocket.send_json({"status": "prompt_updated"})
 
-            await websocket.send_json({
-                "type": "segmentation",
-                "observations": [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "label": str(int(c)),
-                        "confidence": float(s),
-                        "bbox": {
-                            "x": float(x1),
-                            "y": float(y1),
-                            "width": float(x2 - x1),
-                            "height": float(y2 - y1)
-                        },
-                        "worldPosition": None
-                    }
-                    for (x1, y1, x2, y2), s, c in zip(
-                        r.boxes.xyxy.tolist(),
-                        r.boxes.conf.tolist(),
-                        r.boxes.cls.tolist()
-                    )
-                ]
-            })
-    try:
-        await asyncio.gather(receiver(), processor())
+                elif msg_type == "switch_model":
+                    session.load_model(data["model"])
+                    await websocket.send_json({"status": "model_switched"})
+
+                elif msg_type == "start_stream":
+                    session.streaming = True
+                    await websocket.send_json({"status": "streaming_started"})
+
+            # BYTES -> used for frames which we run inference on. Fastr like that
+            elif "bytes" in message:
+                if not session.model_type:
+                    print("WebSocket: Inference ERROR - model_type is false")
+                    continue  # or error
+
+                frame_bytes = message["bytes"]
+
+                results = session.predict(frame_bytes)
+
+                await websocket.send_json(results)
     except WebSocketDisconnect:
-        print("YOLOv26-seg: Client disconnected cleanly")
-    except Exception as e:
-        print("YOLOv26-seg: WebSocket error:", e)
+        print("Client disconnected")
+
     finally:
-        print("YOLOv26-seg: Cleaning up session")
-
-@inference_api_router.websocket("/ws/SAM3-seg")
-async def sam3_segmentation_websocket_inference(websocket: WebSocket):
-    await websocket.accept()
-
-    latest_frame = None
-    prompt = None
-
-    async def receiver():
-        nonlocal latest_frame
-        while True: # overwriting new frames
-            msg = await websocket.receive()
-
-            if "bytes" in msg:
-                latest_frame = msg["bytes"]
-
-            elif "text" in msg:
-                data = json.loads(msg["text"])
-                # prompt stuff
-                msg_type = data["type"]
-                if msg_type == "prompt":
-                    if prompt == None:
-                        prompt = [data["payload"]]
-                    else:
-                        prompt.append(data["payload"])
-                    print("SAM3-seg: Updated prompt:", prompt)
-                elif msg_type == "defaultPrompt":
-                    prompt = None
-
-                elif msg_type == "ping":
-                    await websocket.send_json({"type": "pong"})
-
-                elif msg_type == "control":
-                    if data["payload"] == "pause":
-                        latest_frame = None
-
-    async def processor():
-        nonlocal latest_frame
-        while True:
-            if latest_frame is None:
-                await asyncio.sleep(0.01)
-                continue
-
-            frame = latest_frame
-            latest_frame = None
-
-            results = await asyncio.to_thread(
-                inference.sam3_segment_with_text_prompts,
-                frame,
-                prompt
-            )
-
-            r = results[0]
-
-            await websocket.send_json({
-                "type": "segmentation",
-                "observations": [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "label": str(int(c)),
-                        "confidence": float(s),
-                        "bbox": {
-                            "x": float(x1),
-                            "y": float(y1),
-                            "width": float(x2 - x1),
-                            "height": float(y2 - y1)
-                        },
-                        "worldPosition": None
-                    }
-                    for (x1, y1, x2, y2), s, c in zip(
-                        r.boxes.xyxy.tolist(),
-                        r.boxes.conf.tolist(),
-                        r.boxes.cls.tolist()
-                    )
-                ]
-            })
-    try:
-        await asyncio.gather(receiver(), processor())
-    except WebSocketDisconnect:
-        print("SAM3-seg: Client disconnected cleanly")
-    except Exception as e:
-        print("SAM3-seg: WebSocket error:", e)
-    finally:
-        print("SAM3-seg: Cleaning up session")
-#
-#   This is supposed to make predictions returning bounding boxes.
-#
-@inference_api_router.post("/YOLOv26-det")
-async def yolo_26_detection_prediction(file: UploadFile = File(...)):
-    try:
-        results = await inference.yolo_26_detection_prediction(file=file)
-        return JSONResponse(content={"results": results}, status_code=200)
-    except Exception as e:
-        print(f"Error in yolo_26_detection_prediction(): {str(e)}")
-        raise HTTPException(status_code=500, detail="YOLOv26 Detection Prediction has failed!")
-
-@inference_api_router.post("/SAM3-prompted")
-async def sam3_segment_with_text_prompts(file: UploadFile = File(...), text: list[str] = Form(...)):
-    try:
-        text = await json.loads(text)
-        results = await inference.sam3_segment_with_text_prompts(file=file, text=text)
-        return JSONResponse(content={"results": results}, status_code=200)
-    except Exception as e:
-        print(f"Error in sam3_segment_with_text_prompts(): {str(e)}")
-        raise HTTPException(status_code=500, detail="SAM3-TXT Prediction has failed!")
-
-@inference_api_router.post("/SAM3-boxed")
-async def sam3_segment_with_bounding_boxes(file: UploadFile = File(...), boxes: list[int] = Form(...)):
-    try:
-        text = await json.loads(text)
-        results = await inference.sam3_segment_with_bounding_boxes(file=file, boxes=boxes)
-        return JSONResponse(content={"results": results}, status_code=200)
-    except Exception as e:
-        print(f"Error in sam3_segment_with_bounding_boxes(): {str(e)}")
-        raise HTTPException(status_code=500, detail="SAM3-BB Prediction has failed!")
+        print("Cleaning session")
+        del session
