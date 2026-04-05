@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 from .requestforms import TokenData, Token
 from typing import Annotated
-from fastapi import Depends, status, HTTPException
+from fastapi import Depends, status, HTTPException, WebSocket, WebSocketException, status
 
 import jwt
 from jwt import PyJWTError
@@ -91,8 +91,20 @@ def get_current_user(token: Annotated[str, Depends(oauth_bearer)]) -> TokenData:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+async def get_current_user_ws(websocket: WebSocket):
+    auth = websocket.headers.get("authorization")
+
+    if not auth or not auth.startswith("Bearer "):
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
+
+    token = auth.split(" ")[1]
+
+    user = verify_token(token)
+    return user
+
 
 CurrentUser = Annotated[TokenData, Depends(get_current_user)]
+WebSocketUser = Annotated[TokenData, Depends(get_current_user_ws)]
 
 
 def login_to_get_access_token(

@@ -1,17 +1,16 @@
-from fastapi import APIRouter
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket, WebSocketDisconnect, Depends, APIRouter
 from service.users import CurrentUser
 from service import inference
 import json
 from service.inference import InferenceSession
+from service.users import get_current_user_ws
 
 inference_api_router = APIRouter(
     prefix="/api/inference"
 )
 
-
 @inference_api_router.websocket("/ws/inference")
-async def inference_ws(current_user: CurrentUser, websocket: WebSocket):
+async def inference_ws(websocket: WebSocket, current_user: CurrentUser = Depends(get_current_user_ws)):
     await websocket.accept()
 
     session = InferenceSession()
