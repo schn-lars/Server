@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi import WebSocket, WebSocketDisconnect
 import asyncio
-from users import CurrentUser
+from service.users import CurrentUser
 from service import inference
 import json
 import uuid
