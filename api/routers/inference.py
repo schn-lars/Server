@@ -1,12 +1,9 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter
 from fastapi import WebSocket, WebSocketDisconnect
-import asyncio
 from service.users import CurrentUser
 from service import inference
 import json
-import uuid
-from inference import InferenceSession
+from service.inference import InferenceSession
 
 inference_api_router = APIRouter(
     prefix="/api/inference"
