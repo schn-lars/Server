@@ -10,7 +10,7 @@ inference_api_router = APIRouter(
 )
 
 @inference_api_router.websocket("/ws/inference")
-async def inference_ws(websocket: WebSocket, current_user: WebSocketUser = Depends(get_current_user_ws)):
+async def inference_ws(websocket: WebSocket, current_user: WebSocketUser):
     await websocket.accept()
 
     session = InferenceSession()
