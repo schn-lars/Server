@@ -3,7 +3,7 @@ from service.users import WebSocketUser
 from service import inference
 import json
 from service.inference import InferenceSession
-from service.users import get_current_user_ws
+from service.utils import logging
 
 inference_api_router = APIRouter(
     prefix="/api/inference"
@@ -20,39 +20,40 @@ async def inference_ws(websocket: WebSocket, current_user: WebSocketUser):
             message = await websocket.receive()
 
             if message["type"] == "websocket.disconnect":
-                print("Connection has been cut.")
+                logging.info("Connection has been cut.")
                 break
 
             # upon receival of text, this is mostly yused for controls and settings of the current session
             if "text" in message:
                 data = json.loads(message["text"])
                 msg_type = data.get("type")
+                logging.info(f"Incoming message of type {msg_type}")
 
                 if msg_type == "init":
                     session.load_model(data["model"])
-                    print(f"Initialized model to {session.model_type} - {session.task}")
+                    logging.info(f"Initialized model to {session.model_type} - {session.task}")
                     await websocket.send_json({"status": "model_loaded"})
 
                 elif msg_type == "set_prompt":
                     # Make sure, that 'prompt' is already a list of the current prompts we are using!
                     session.prompt = data.get("prompt", inference.SAM3_DEFAULT_PROMPT)
-                    print(f"Set new prompt to: {session.prompt}")
+                    logging.info(f"Set new prompt to: {session.prompt}")
                     await websocket.send_json({"status": "prompt_updated"})
 
                 elif msg_type == "switch_model":
                     session.load_model(data["model"])
-                    print(f"Switched model to {session.model_type} - {session.task}")
+                    logging.info(f"Switched model to {session.model_type} - {session.task}")
                     await websocket.send_json({"status": "model_switched"})
 
                 elif msg_type == "start_stream":
                     session.streaming = True
-                    print("Accepting Streams now")
+                    logging.info("Accepting Streams now")
                     await websocket.send_json({"status": "streaming_started"})
 
             # BYTES -> used for frames which we run inference on. Fastr like that
             elif "bytes" in message:
                 if not session.model_type:
-                    print("WebSocket: Inference ERROR - model_type is false")
+                    logging.info("WebSocket: Inference ERROR - model_type is false")
                     continue  # or error
 
                 frame_bytes = message["bytes"]
@@ -61,8 +62,8 @@ async def inference_ws(websocket: WebSocket, current_user: WebSocketUser):
 
                 await websocket.send_json(results)
     except WebSocketDisconnect:
-        print("Client disconnected")
+        logging.error("Client disconnected")
 
     finally:
-        print("Cleaning session")
+        logging.error("Cleaning session")
         del session
