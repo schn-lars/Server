@@ -7,6 +7,7 @@ from service.resources import clear_images, deletor
 from service.patchnotes import puller
 from service.entities import *
 from service.init_db import initialize_db
+from service.utils import logging
 
 # Routers
 from routers.bird import bird_api_router
@@ -55,6 +56,8 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 def startup():
+    logging.setup_logging(log_level=logging.LogLevels.info)
+
     initialize_db()
 
     global refresh_repo
