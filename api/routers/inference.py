@@ -30,19 +30,23 @@ async def inference_ws(websocket: WebSocket, current_user: WebSocketUser):
 
                 if msg_type == "init":
                     session.load_model(data["model"])
+                    print(f"Initialized model to {session.model_type} - {session.task}")
                     await websocket.send_json({"status": "model_loaded"})
 
                 elif msg_type == "set_prompt":
                     # Make sure, that 'prompt' is already a list of the current prompts we are using!
                     session.prompt = data.get("prompt", inference.SAM3_DEFAULT_PROMPT)
+                    print(f"Set new prompt to: {session.prompt}")
                     await websocket.send_json({"status": "prompt_updated"})
 
                 elif msg_type == "switch_model":
                     session.load_model(data["model"])
+                    print(f"Switched model to {session.model_type} - {session.task}")
                     await websocket.send_json({"status": "model_switched"})
 
                 elif msg_type == "start_stream":
                     session.streaming = True
+                    print("Accepting Streams now")
                     await websocket.send_json({"status": "streaming_started"})
 
             # BYTES -> used for frames which we run inference on. Fastr like that
