@@ -4,7 +4,7 @@ from enum import Enum
 LOG_FORMAT = (
     "%(levelname)s:%(message)s:%(pathname)s:%(funcname)s:%(lineno)d"  # For debugs
 )
-LOG_FILE = "tranceition.log"
+LOG_FILE = "intenso.log"
 
 
 class LogLevels(str, Enum):
