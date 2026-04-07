@@ -16,14 +16,17 @@ class LogLevels(str, Enum):
 
 
 def setup_logging(log_level: str = LogLevels.error):
-    log_level = str(log_level).upper()
+    if isinstance(log_level, LogLevels):
+        log_level = log_level.value
+
+    log_level = log_level.upper()
     log_levels = [level.value for level in LogLevels]
 
     if log_level not in log_levels:
-        logging.basicConfig(filename=LOG_FILE, encoding="utf-8", level=LogLevels.error)
+        logging.basicConfig(filename=LOG_FILE, encoding="utf-8", level=LogLevels.error.value)
         return
 
-    if log_level == LogLevels.debug:
+    if log_level == LogLevels.debug.value:
         logging.basicConfig(
             filename=LOG_FILE,
             encoding="utf-8",
