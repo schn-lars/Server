@@ -1,5 +1,5 @@
 import logging
-from enum import StrEnum
+from enum import Enum
 
 LOG_FORMAT = (
     "%(levelname)s:%(message)s:%(pathname)s:%(funcname)s:%(lineno)d"  # For debugs
@@ -7,7 +7,7 @@ LOG_FORMAT = (
 LOG_FILE = "tranceition.log"
 
 
-class LogLevels(StrEnum):
+class LogLevels(str, Enum):
     info = "INFO"
     warn = "WARN"
     error = "ERROR"
