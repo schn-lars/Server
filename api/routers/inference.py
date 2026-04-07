@@ -19,6 +19,10 @@ async def inference_ws(websocket: WebSocket, current_user: WebSocketUser):
         while True:
             message = await websocket.receive()
 
+            if message["type"] == "websocket.disconnect":
+                print("Connection has been cut.")
+                break
+
             # upon receival of text, this is mostly yused for controls and settings of the current session
             if "text" in message:
                 data = json.loads(message["text"])
