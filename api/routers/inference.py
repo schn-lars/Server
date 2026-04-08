@@ -30,9 +30,18 @@ async def inference_ws(websocket: WebSocket, current_user: WebSocketUser):
                 logging.info(f"Incoming message of type {msg_type}")
 
                 if msg_type == "init":
-                    session.load_model(data["model"])
+                    session.load_model(
+                        model_type=data["model"],
+                        task=data["task"]
+                    )
                     logging.info(f"Initialized model to {session.model_type} - {session.task}")
-                    await websocket.send_json({"status": "model_loaded"})
+                    await websocket.send_json(
+                        {
+                            "status": "model_loaded",
+                            "model" : session.model_type,
+                            "task"  : session.task
+                        }
+                    )
 
                 elif msg_type == "set_prompt":
                     # Make sure, that 'prompt' is already a list of the current prompts we are using!
@@ -41,9 +50,18 @@ async def inference_ws(websocket: WebSocket, current_user: WebSocketUser):
                     await websocket.send_json({"status": "prompt_updated"})
 
                 elif msg_type == "switch_model":
-                    session.load_model(data["model"])
+                    session.load_model(
+                        model_type=data["model"],
+                        task=data["task"]
+                    )
                     logging.info(f"Switched model to {session.model_type} - {session.task}")
-                    await websocket.send_json({"status": "model_switched"})
+                    await websocket.send_json(
+                        {
+                            "status": "model_switched",
+                            "model" : session.model_type,
+                            "task"  : session.task
+                        }
+                    )
 
                 elif msg_type == "start_stream":
                     session.streaming = True

@@ -37,33 +37,46 @@ class InferenceSession:
     def has_default_prompt(self) -> bool:
         return self.prompt == [SAM3_DEFAULT_PROMPT]
 
-    def load_model(self, model_type: str):
-        if model_type == "yolo_seg":
-            self.yolo_model = YOLO("yolo26s-seg.pt")
+    '''
+        @param model_type [YOLOv26, YOLOv11, SAM3]
+        @param task:      [Segmentation, Detection] 
+    '''
+    def load_model(self, model_type: str, task: str):
+        if model_type == "YOLOv26":
+            self.yolo_model = YOLO("yolo26s-seg.pt" if task == 'Segmentation' else 'yolo26s.pt')
             self.model_type = model_type
-            self.task = 'segmentation'
+            self.task = task
 
-        elif model_type == "yolo_det":
-            self.yolo_model = YOLO("yolo26s.pt")
+        elif model_type == "YOLOv11":
+            self.yolo_model = YOLO("yolo11s-seg.pt" if task == 'Segmentation' else 'yolo11s.pt')
             self.model_type = model_type
-            self.task = 'detection'
+            self.task = task
 
-        elif model_type == "sam_text":
+        elif model_type == "SAM3":
             self.sam_predictor = SAM3SemanticPredictor(overrides=overrides)
             self.model_type = model_type
-            self.task = 'segmentation'
+            self.task = task
 
         else:
+            print("load_model() ERROR - Unknown model", model_type)
             raise ValueError("Unknown model")
 
     def predict(self, frame: bytes):
         img = Image.open(io.BytesIO(frame)).convert("RGB")
 
-        if self.model_type == "yolo_seg":
+        if self.model_type == "SAM3":
+            self.sam_predictor.set_image(img)
+            # TODO: check return value here
+            return self.sam_predictor(text=self.prompt)
+
+        elif self.task == "Segmentation" and self.model_type.startswith('YOLO'):
             results = self.yolo_model.predict(img)
             r = results[0]
+
+            # TODO: we also need to return the actual masks here. This is not yet happening.
+            print(r)
             return {
-                "type": "segmentation",
+                "type": self.task,
                 "observations": [
                     {
                         "id": str(uuid.uuid4()),
@@ -86,11 +99,11 @@ class InferenceSession:
             }
 
 
-        elif self.model_type == "yolo_det":
+        elif self.task == "Detection" and self.model_type.startswith('YOLO'):
             result = self.yolo_model.predict(img)
             r = result[0]
             return {
-                "type": "segmentation",
+                "type": self.task,
                 "observations": [
                     {
                         "id": str(uuid.uuid4()),
@@ -111,12 +124,8 @@ class InferenceSession:
                     )
                 ]
             }
-
-        elif self.model_type == "sam_text":
-            self.sam_predictor.set_image(img)
-            return self.sam_predictor(text=self.prompt)
-
         else:
+            print(f"predict() ERROR - Unknown model:", self.model_type)
             raise RuntimeError("Model not loaded")
 
 
