@@ -45,7 +45,7 @@ async def inference_ws(websocket: WebSocket, current_user: WebSocketUser):
 
                 elif msg_type == "set_prompt":
                     # Make sure, that 'prompt' is already a list of the current prompts we are using!
-                    session.prompt = data.get("prompt", inference.SAM3_DEFAULT_PROMPT)
+                    session.prompt = data.get("prompt", [inference.SAM3_DEFAULT_PROMPT])
                     logging.info(f"Set new prompt to: {session.prompt}")
                     await websocket.send_json({"status": "prompt_updated"})
 
