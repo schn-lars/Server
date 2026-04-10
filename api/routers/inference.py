@@ -70,7 +70,7 @@ async def inference_ws(websocket: WebSocket, current_user: WebSocketUser):
 
             # BYTES -> used for frames which we run inference on. Fastr like that
             elif "bytes" in message:
-                if not session.model_type:
+                if session.model_type is None:
                     logging.info("WebSocket: Inference ERROR - model_type is false")
                     continue  # or error
 
