@@ -29,7 +29,7 @@ async def inference_ws(websocket: WebSocket, current_user: WebSocketUser):
                 msg_type = data.get("type")
                 logging.info(f"Incoming message of type {msg_type}")
 
-                if msg_type == "init":
+                if msg_type == "init_model":
                     session.load_model(
                         model_type=data["model"],
                         task=data["task"]
