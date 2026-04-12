@@ -63,6 +63,7 @@ class InferenceSession:
 
     def predict(self, frame: bytes):
         img = Image.open(io.BytesIO(frame)).convert("RGB")
+        width, height = img.size
 
         if self.model_type == "SAM3":
             self.sam_predictor.set_image(img)
@@ -83,10 +84,10 @@ class InferenceSession:
                         "label": str(int(c)),
                         "confidence": float(s),
                         "bbox": {
-                            "x": float(x1),
-                            "y": float(y1),
-                            "width": float(x2 - x1),
-                            "height": float(y2 - y1)
+                            "x": float(x1) / width,
+                            "y": float(y1) / height,
+                            "width": float(x2 - x1) / width,
+                            "height": float(y2 - y1) / height
                         },
                         "worldPosition": None
                     }
@@ -110,10 +111,10 @@ class InferenceSession:
                         "label": str(int(c)),
                         "confidence": float(s),
                         "bbox": {
-                            "x": float(x1),
-                            "y": float(y1),
-                            "width": float(x2 - x1),
-                            "height": float(y2 - y1)
+                            "x": float(x1) / width,
+                            "y": float(y1) / height,
+                            "width": float(x2 - x1) / width,
+                            "height": float(y2 - y1) / height
                         },
                         "worldPosition": None
                     }
