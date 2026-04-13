@@ -112,14 +112,14 @@ class InferenceSession:
                         "confidence": float(s),
                         "bbox": {
                             "x": float(x1) / width,
-                            "y": float(y1) / height,
+                            "y": float(y2) / height,
                             "width": float(x2 - x1) / width,
-                            "height": float(y2 - y1) / height
+                            "height": float(y1 - y2) / height
                         },
                         "worldPosition": None
                     }
                     for (x1, y1, x2, y2), s, c in zip(
-                        r.boxes.xyxy.tolist(),
+                        r.boxes.xyxy.tolist(), # top-left-x, top-left-y, bottom-right-x, bottom-right-y, frontend expects (x,y) to be bottom left
                         r.boxes.conf.tolist(),
                         r.boxes.cls.tolist()
                     )
