@@ -108,7 +108,7 @@ class InferenceSession:
                 "observations": [
                     {
                         "id": str(uuid.uuid4()),
-                        "label": str(int(c)),
+                        "label": str(c),
                         "confidence": float(s),
                         "bbox": {
                             "x": float(x1) / width,
