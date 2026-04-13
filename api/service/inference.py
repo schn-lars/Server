@@ -121,7 +121,7 @@ class InferenceSession:
                     for (x1, y1, x2, y2), s, c in zip(
                         r.boxes.xyxy.tolist(), # top-left-x, top-left-y, bottom-right-x, bottom-right-y, frontend expects (x,y) to be bottom left
                         r.boxes.conf.tolist(),
-                        r.boxes.cls.tolist()
+                        [r.names[idx] for idx in r.boxes.cls.tolist()]
                     )
                 ]
             }
