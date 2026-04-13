@@ -63,6 +63,7 @@ class InferenceSession:
 
     def predict(self, frame: bytes):
         img = Image.open(io.BytesIO(frame)).convert("RGB")
+        img.save(f"/outputs/input-{time.time()}.jpg")
         width, height = img.size
 
         if self.model_type == "SAM3":
