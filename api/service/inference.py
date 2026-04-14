@@ -5,7 +5,7 @@ import time
 from PIL import Image
 import io
 import uuid
-from utils import logging
+from service.utils import logging
 from fastapi import UploadFile
 
 # https://docs.ultralytics.com/models/sam-3/#segment-with-text-prompts
