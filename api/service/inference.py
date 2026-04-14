@@ -5,6 +5,7 @@ import time
 from PIL import Image
 import io
 import uuid
+from utils import logging
 from fastapi import UploadFile
 
 # https://docs.ultralytics.com/models/sam-3/#segment-with-text-prompts
@@ -103,6 +104,7 @@ class InferenceSession:
         elif self.task == "Detection" and self.model_type.startswith('YOLO'):
             result = self.yolo_model.predict(img)
             r = result[0]
+            logging.info(r)
             return {
                 "type": self.task,
                 "observations": [
@@ -114,7 +116,7 @@ class InferenceSession:
                             "x": float(x1) / width,
                             "y": float(y2) / height,
                             "width": float(x2 - x1) / width,
-                            "height": float(y1 - y2) / height
+                            "height": float(y2 - y1) / height
                         },
                         "worldPosition": None
                     }
