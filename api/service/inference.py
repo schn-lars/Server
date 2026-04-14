@@ -104,7 +104,7 @@ class InferenceSession:
         elif self.task == "Detection" and self.model_type.startswith('YOLO'):
             result = self.yolo_model.predict(img)
             r = result[0]
-            logging.info(r)
+            logging.info(r.boxes.xyxy.tolist())
             return {
                 "type": self.task,
                 "observations": [
