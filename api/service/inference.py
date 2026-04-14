@@ -119,7 +119,7 @@ class InferenceSession:
                         "confidence": float(s),
                         "bbox": {
                             "x": float(x1) / width,
-                            "y": float(y2) / height,
+                            "y": float(y1) / height,
                             "width": float(x2 - x1) / width,
                             "height": float(y2 - y1) / height
                         },
