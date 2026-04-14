@@ -104,7 +104,12 @@ class InferenceSession:
         elif self.task == "Detection" and self.model_type.startswith('YOLO'):
             result = self.yolo_model.predict(img)
             r = result[0]
-            logging.info(r.boxes.xyxy.tolist())
+            '''
+                Ultralytics: boxes.xyxy = top-left-x, top-left-y, bottom-right-x, bottom-right-y
+                This is however not the case. An example output is: 
+                    [297.5180358886719, 389.44091796875, 425.7095642089844, 479.23895263671875]
+                We can clearly see that arr[0] < arr[2] and arr[1] < arr[3]
+            '''
             return {
                 "type": self.task,
                 "observations": [
@@ -121,7 +126,7 @@ class InferenceSession:
                         "worldPosition": None
                     }
                     for (x1, y1, x2, y2), s, c in zip(
-                        r.boxes.xyxy.tolist(), # top-left-x, top-left-y, bottom-right-x, bottom-right-y, frontend expects (x,y) to be bottom left
+                        r.boxes.xyxy.tolist(), 
                         r.boxes.conf.tolist(),
                         [r.names[idx] for idx in r.boxes.cls.tolist()]
                     )
