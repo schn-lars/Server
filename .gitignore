@@ -6,3 +6,4 @@
 .coreml-env
 *.mlpackage
 .DS_Store
+**/.DS_Store
