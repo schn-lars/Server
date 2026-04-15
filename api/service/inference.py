@@ -1,12 +1,14 @@
 from ultralytics.models.sam import SAM3SemanticPredictor
 from ultralytics import YOLO
-import base64
 import time
 from PIL import Image
 import io
 import uuid
 from service.utils import logging
 from fastapi import UploadFile
+import torch
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # https://docs.ultralytics.com/models/sam-3/#segment-with-text-prompts
 overrides = dict(
@@ -25,6 +27,8 @@ SAM3_DEFAULT_PROMPT= '''
     An example for labels we are NOT interested in are: ['blue book', 'green book', 'book with colorful cover', 'poster'],
     instead we want to have the label-set ['book', 'poster'].
 '''
+
+print(f"Setup inference on {DEVICE}")
 
 class InferenceSession:
     def __init__(self):
@@ -45,16 +49,18 @@ class InferenceSession:
     def load_model(self, model_type: str, task: str):
         if model_type == "YOLOv26":
             self.yolo_model = YOLO("yolo26s-seg.pt" if task == 'Segmentation' else 'yolo26s.pt')
+            self.yolo_model.to(DEVICE)
             self.model_type = model_type
             self.task = task
 
         elif model_type == "YOLOv11":
             self.yolo_model = YOLO("yolo11s-seg.pt" if task == 'Segmentation' else 'yolo11s.pt')
+            self.yolo_model.to(DEVICE)
             self.model_type = model_type
             self.task = task
 
         elif model_type == "SAM3":
-            self.sam_predictor = SAM3SemanticPredictor(overrides=overrides)
+            self.sam_predictor = SAM3SemanticPredictor(overrides={**overrides, "device": DEVICE})
             self.model_type = model_type
             self.task = task
 
