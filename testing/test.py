@@ -224,4 +224,5 @@ print(f"Loaded {len(raw_words)} raw words.")
 filtered = heuristic_prefilter(raw_words)
 print(f"After heuristic prefilter: {len(filtered)} candidate words.")
 
-export_yolo_model(words=filtered)
+print(filtered)
+#export_yolo_model(words=filtered)
