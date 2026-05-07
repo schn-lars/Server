@@ -56,8 +56,8 @@ from pathlib import Path
 # CONFIG
 # ==========================
 
-WORDS_FILE = Path("yolo_world_objects_2k.txt")  # your 6k-word list
-OUTPUT_FILE = Path("yolo_world_objects_2k.txt")
+WORDS_FILE = Path("yolo_world_objects_refined.txt")  # your 6k-word list
+OUTPUT_FILE = Path("yolo_world_objects_refined.txt")
 TARGET_CLASSES = 2000
 
 # If your API expects a different JSON shape, adjust `get_clip_embedding` below.
@@ -225,4 +225,4 @@ filtered = heuristic_prefilter(raw_words)
 print(f"After heuristic prefilter: {len(filtered)} candidate words.")
 
 print(filtered)
-#export_yolo_model(words=filtered)
+export_yolo_model(words=filtered)

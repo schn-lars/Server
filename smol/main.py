@@ -69,23 +69,34 @@ async def run_inference(object: str, prompt: str, file: UploadFile = File(...)):
 
 @app.post("/general")
 async def run_smol_general(object: str, file: UploadFile = File(...)):
-    GENERAL_CONTEXT_PROMPT = """
-    Provide a description of this object using following attributes:
-    - "object_type" = Specific object type
-    - "visible_text" = Text, if any, which is placed on the object itself
-    - "summary" = Description of how the object is embedded in the environment. Are there other similar objects? How do they relate to each other?
+    GENERAL_CONTEXT_PROMPT =  f'''
+    You are a visual assistant. You are given an image.
+    This image contains a {object} in an environment.
+    ''' + """
+    Provide a description of this environment using following attributes:
+    - "summary" = Description of how the shown environment. Are there other similar objects? How do they relate to each other?
     - "locations_detected" = List of all adresses or other location based information (i.e. ["Paris", "Bern 3011"]). Please make sure we have one location per item of the list.
     - "other_relevant_information" = Anything which is worth mentioning that has not been covered.
 
     The result must be captured in a single JSON like that:
     {
-    "object_type": "",
-    "visible_text": "",
     "summary": "",
     "locations_detected": [],
     "other_relevant_information": ""
     }
     Return ONLY valid JSON.
+
+    Example:
+    {
+    "object_type": "dog",
+    "visible_text": "",
+    "summary": "A brown dog laying on green grass. Some other dogs are playing in the background.",
+    "locations_detected": [],
+    "other_relevant_information": "The dog's breed is a german shephard"
+    }
+
+    Try not to be very brief with your values. But dont overcomplicate your descriptions by large text that dont carry much meaning.
+    The summary needs to be a text which can be used by a CLIP model to retrieve images of the same structure.
     """
     try:
         try:
@@ -106,17 +117,42 @@ async def run_smol_general(object: str, file: UploadFile = File(...)):
 
 @app.post("/specific")
 async def run_smol_specific(object: str, file: UploadFile = File(...)):
-    SPECIFIC_CONTEXT_PROMPT = """
-    Provide a detailed description of this object. What kind of object is it? How does it look like?
-    What other information can you give about that object? This description text is intended to give a person a detailed understanding of the object in scope.
-    This description must be returned in single JSON like that:
+    CONTEXT_SPECIFIC_PROMPT =  f'''
+    You are a visual assistant. You are given an image.
+    This image contains a {object}.
+    ''' + """
+    Provide a description of this object using following attributes:
+    - "summary" = What kind of object is it precisely? How does it look like?
+    - "content" = In case the object has text on it, give a summary of that text here.
+    - "urls": = In case the object contains either a website or QR-code, provide the websites in question.
+    - "locations_detected" = List of all adresses or other location based information (i.e. ["Paris", "Bern 3011"]). Please make sure we have one location per item of the list.
+    - "other_relevant_information" = Anything which is worth mentioning that has not been covered.
+
+    The result must be captured in a single JSON like that:
     {
-    "description": ""
+    "summary": "",
+    "content": "",
+    "urls": []
+    "locations_detected": [],
+    "other_relevant_information": ""
     }
+    Return ONLY valid JSON.
+
+    Example:
+    {
+    "summary": "A brown dog laying on green grass.",
+    "content": "The collar reads 'Bello'".,
+    "urls": [],
+    "locations_detected": [],
+    "other_relevant_information": "The dog's breed is a german shephard"
+    }
+
+    Try not to be very brief with your values. But dont overcomplicate your descriptions by large text that dont carry much meaning.
+    The summary needs to be a text which can be used by a CLIP model to retrieve images of the same structure.
     """
     try:
         try:
-            response = await run_inference(object=object, prompt=SPECIFIC_CONTEXT_PROMPT, file=file)
+            response = await run_inference(object=object, prompt=CONTEXT_SPECIFIC_PROMPT, file=file)
             if response is None:
                 print(f"run_smol_specific: Response is None")
                 return JSONResponse(content={"error": "Response is None"}, status_code=500)
