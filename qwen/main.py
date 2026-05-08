@@ -41,90 +41,8 @@ async def load_model():
 
     model.eval()
 
-@app.post("/general")
-async def run_qwen_general(object: str, file: UploadFile = File(...)):
-    GENERAL_CONTEXT_PROMPT =  f'''
-    You are a visual assistant. You are given an image.
-    This image contains a {object} in an environment.
-    ''' + """
-    Provide a description of this environment using following attributes:
-    - "summary" = Description of how the shown environment. Are there other similar objects? How do they relate to each other?
-    - "locations_detected" = List of all adresses or other location based information (i.e. ["Paris", "Bern 3011"]). Please make sure we have one location per item of the list.
-    - "other_relevant_information" = Anything which is worth mentioning that has not been covered.
 
-    The result must be captured in a single JSON like that:
-    {
-    "summary": "",
-    "locations_detected": [],
-    "other_relevant_information": ""
-    }
-    Return ONLY valid JSON.
-
-    Example:
-    {
-    "object_type": "dog",
-    "visible_text": "",
-    "summary": "A brown dog laying on green grass. Some other dogs are playing in the background.",
-    "locations_detected": [],
-    "other_relevant_information": "The dog's breed is a german shephard"
-    }
-
-    Try not to be very brief with your values. But dont overcomplicate your descriptions by large text that dont carry much meaning.
-    The summary needs to be a text which can be used by a CLIP model to retrieve images of the same structure.
-    """
-    try:
-        contents = await file.read()
-        img = Image.open(io.BytesIO(contents)).convert("RGB")
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "image": img},
-                    {"type": "text", "text": GENERAL_CONTEXT_PROMPT},
-                ],
-            }
-        ]
-        text = processor.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True
-        )
-        inputs = processor(
-            text=text,
-            images=img,
-            return_tensors="pt"
-        )
-
-        inputs = {k: v.to(model.device) for k, v in inputs.items()}
-
-        with torch.no_grad():
-            output_ids = model.generate(
-                **inputs,
-                max_new_tokens=256,
-                do_sample=False
-            )
-
-        generated_ids = output_ids[:, inputs["input_ids"].shape[1]:]
-
-        generated_text = processor.batch_decode(
-            generated_ids,
-            skip_special_tokens=True
-        )[0]
-        try:
-            generated_json = json.loads(generated_text)
-        except:
-            generated_json = {"raw_output": generated_text}
-        return JSONResponse(content=generated_json)
-    except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
-
-@app.post("/specific")
-async def run_qwen_specific(object: str, file: UploadFile = File(...)):
-    CONTEXT_SPECIFIC_PROMPT =  f'''
-    You are a visual assistant. You are given an image.
-    This image contains a {object}.
-    ''' + """
+CONTEXT_SPECIFIC_PROMPT =  """
     Provide a description of this object using following attributes:
     - "summary" = What kind of object is it precisely? How does it look like?
     - "content" = In case the object has text on it, give a summary of that text here.
@@ -154,48 +72,136 @@ async def run_qwen_specific(object: str, file: UploadFile = File(...)):
     Try not to be very brief with your values. But dont overcomplicate your descriptions by large text that dont carry much meaning.
     The summary needs to be a text which can be used by a CLIP model to retrieve images of the same structure.
     """
+
+GENERAL_CONTEXT_PROMPT =  """
+    Provide a description of this environment using following attributes:
+    - "summary" = Description of how the shown environment. Are there other similar objects? How do they relate to each other?
+    - "locations_detected" = List of all adresses or other location based information (i.e. ["Paris", "Bern 3011"]). Please make sure we have one location per item of the list.
+    - "other_relevant_information" = Anything which is worth mentioning that has not been covered.
+
+    The result must be captured in a single JSON like that:
+    {
+    "summary": "",
+    "locations_detected": [],
+    "other_relevant_information": ""
+    }
+    Return ONLY valid JSON.
+
+    Example:
+    {
+    "object_type": "dog",
+    "visible_text": "",
+    "summary": "A brown dog laying on green grass. Some other dogs are playing in the background.",
+    "locations_detected": [],
+    "other_relevant_information": "The dog's breed is a german shephard"
+    }
+
+    Try not to be very brief with your values. But dont overcomplicate your descriptions by large text that dont carry much meaning.
+    The summary needs to be a text which can be used by a CLIP model to retrieve images of the same structure.
+    """
+
+def get_pretext(obj: str, general: bool) -> str:
+    if general:
+        return f"""
+            You are a visual assistant. You are given an image.
+            This image contains a {obj}.
+            """
+    else:
+        return f"""
+        You are a visual assistant. You are given an image.
+        This image contains a {obj} in an environment.
+        """
+@app.post("/general")
+async def run_qwen_general(obj: str, file: UploadFile = File(...)):
     try:
         contents = await file.read()
         img = Image.open(io.BytesIO(contents)).convert("RGB")
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "image": img},
-                    {"type": "text", "text": CONTEXT_SPECIFIC_PROMPT},
-                ],
-            }
-        ]
-        text = processor.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True
-        )
-        inputs = processor(
-            text=text,
-            images=img,
-            return_tensors="pt"
-        )
-
-        inputs = {k: v.to(model.device) for k, v in inputs.items()}
-
-        with torch.no_grad():
-            output_ids = model.generate(
-                **inputs,
-                max_new_tokens=256,
-                do_sample=False
-            )
-
-        generated_ids = output_ids[:, inputs["input_ids"].shape[1]:]
-
-        generated_text = processor.batch_decode(
-            generated_ids,
-            skip_special_tokens=True
-        )[0]
+        
+        generated_text = run_inference(prompt=get_pretext(obj=obj, general=True) + GENERAL_CONTEXT_PROMPT, img=img)
         try:
             generated_json = json.loads(generated_text)
         except:
             generated_json = {"raw_output": generated_text}
         return JSONResponse(content=generated_json)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@app.post("/specific")
+async def run_qwen_specific(obj: str, file: UploadFile = File(...)):
+    
+    try:
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+
+        generated_text = run_inference(prompt=get_pretext(obj=obj, general=False) + CONTEXT_SPECIFIC_PROMPT, img=img)
+        try:
+            generated_json = json.loads(generated_text)
+        except:
+            generated_json = {"raw_output": generated_text}
+        return JSONResponse(content=generated_json)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+def run_inference(prompt: str, img: Image):
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "image", "image": img},
+                {"type": "text", "text": prompt},
+            ],
+        }
+    ]
+    text = processor.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True
+    )
+    inputs = processor(
+        text=text,
+        images=img,
+        return_tensors="pt"
+    )
+
+    inputs = {k: v.to(model.device) for k, v in inputs.items()}
+
+    with torch.no_grad():
+        output_ids = model.generate(
+            **inputs,
+            max_new_tokens=256,
+            do_sample=False
+        )
+
+    generated_ids = output_ids[:, inputs["input_ids"].shape[1]:]
+
+    generated_text = processor.batch_decode(
+        generated_ids,
+        skip_special_tokens=True
+    )[0]
+    return generated_text
+
+
+@app.post("/retrieve")
+async def run_qwen_retrieval(obj: str, file: UploadFile = File(...)):
+    try:
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+
+        context_generated_text = run_inference(prompt=CONTEXT_SPECIFIC_PROMPT, img=img)
+        try:
+            context_generated_json = json.loads(context_generated_text)
+        except:
+            context_generated_json = {"raw_output": context_generated_text}
+        
+        specific_generated_text = run_inference(prompt=CONTEXT_SPECIFIC_PROMPT, img=img)
+        try:
+            specific_generated_json = json.loads(specific_generated_text)
+        except:
+            specific_generated_json = {"raw_output": specific_generated_text}
+        
+        final_content = {"general" : context_generated_json, "specific" : specific_generated_json}
+        return JSONResponse(content=final_content)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
