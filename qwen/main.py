@@ -189,13 +189,13 @@ async def run_qwen_retrieval(obj: str, file: UploadFile = File(...)):
         contents = await file.read()
         img = Image.open(io.BytesIO(contents)).convert("RGB")
 
-        context_generated_text = run_inference(prompt=get_pretext(obj=obj, general=False) + CONTEXT_SPECIFIC_PROMPT, img=img)
+        context_generated_text = run_inference(prompt=get_pretext(obj=obj, general=True) + GENERAL_CONTEXT_PROMPT, img=img)
         try:
             context_generated_json = json.loads(context_generated_text)
         except:
             context_generated_json = {"raw_output": context_generated_text}
         
-        specific_generated_text = run_inference(prompt=get_pretext(obj=obj, general=False) + GENERAL_CONTEXT_PROMPT, img=img)
+        specific_generated_text = run_inference(prompt=get_pretext(obj=obj, general=False) + CONTEXT_SPECIFIC_PROMPT, img=img)
         try:
             specific_generated_json = json.loads(specific_generated_text)
         except:
