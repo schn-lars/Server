@@ -184,18 +184,26 @@ def run_inference(prompt: str, img: Image):
 
 
 @app.post("/retrieve")
-async def run_qwen_retrieval(obj: str, file: UploadFile = File(...)):
-    try:
-        contents = await file.read()
-        img = Image.open(io.BytesIO(contents)).convert("RGB")
+async def run_qwen_retrieval(
+    obj: str, 
+    cropped: UploadFile = File(...),
+    full: UploadFile = File(...)
 
-        context_generated_text = run_inference(prompt=get_pretext(obj=obj, general=True) + GENERAL_CONTEXT_PROMPT, img=img)
+):
+    try:
+        cropped_contents = await cropped.read()
+        cropped_img = Image.open(io.BytesIO(cropped_contents)).convert("RGB")
+
+        full_contents = await full.read()
+        full_img = Image.open(io.BytesIO(full_contents)).convert("RGB")
+
+        context_generated_text = run_inference(prompt=get_pretext(obj=obj, general=True) + GENERAL_CONTEXT_PROMPT, img=full_img)
         try:
             context_generated_json = json.loads(context_generated_text)
         except:
             context_generated_json = {"raw_output": context_generated_text}
         
-        specific_generated_text = run_inference(prompt=get_pretext(obj=obj, general=False) + CONTEXT_SPECIFIC_PROMPT, img=img)
+        specific_generated_text = run_inference(prompt=get_pretext(obj=obj, general=False) + CONTEXT_SPECIFIC_PROMPT, img=cropped_img)
         try:
             specific_generated_json = json.loads(specific_generated_text)
         except:
