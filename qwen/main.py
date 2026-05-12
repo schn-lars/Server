@@ -2,7 +2,7 @@ import io, os
 import json
 import torch
 from PIL import Image
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 #from transformers import Qwen2VLForConditionalGeneration, AutoProcessor, BitsAndBytesConfig
 import transformers
@@ -185,10 +185,9 @@ def run_inference(prompt: str, img: Image):
 
 @app.post("/retrieve")
 async def run_qwen_retrieval(
-    obj: str, 
+    obj: str = Form(...), 
     cropped: UploadFile = File(...),
     full: UploadFile = File(...)
-
 ):
     try:
         cropped_contents = await cropped.read()
