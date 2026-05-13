@@ -8,15 +8,32 @@ import uuid
 
 def fetch_shared_info_by_ids(ids: list[str], db: Session):
     try:
-        return db.query(RetrievedInformation).where(RetrievedInformation.id.in_(ids)).all()
+        return (
+            db.query(SharedInformation, RetrievedInformation, User)
+            .join(RetrievedInformation, RetrievedInformation.id == SharedInformation.id)
+            .join(User, User.id == SharedInformation.user_id)
+            .filter(SharedInformation.public == True)
+            .filter(SharedInformation.id.in_(ids))
+            .all()
+        )
     except Exception as e:
-        print(f"Error in fetch_shared_info_by_id: {str(e)}")
+        print(f"Error: {str(e)}")
+        return []
 
 def fetch_shared_by_proximity(request: FetchSharedIdsRequest, db: Session, radius_in_meters: int = 20) -> list[str]:
     try:
-        return db.query(SharedInformation.id).where(SharedInformation.coord_x.between(SharedInformation.coord_x))
+        return (
+            db.query(SharedInformation, RetrievedInformation, User)
+            .join(RetrievedInformation, RetrievedInformation.id == SharedInformation.id)
+            .join(User, User.id == SharedInformation.user_id)
+            .filter(SharedInformation.public == True)
+            .filter(SharedInformation.coord_y.between(SharedInformation.coord_y - radius_in_meters, SharedInformation.coord_y + radius_in_meters))
+            .filter(SharedInformation.coord_x.between(SharedInformation.coord_x - radius_in_meters, SharedInformation.coord_x + radius_in_meters))
+            .all()
+        )
     except Exception as e:
         print(f"Error in fetch_shared_by_proximity: {str(e)}")
+        return []
 
 def insert_shared_information(request: ShareInformationRequest, db: Session):
     try:
@@ -162,4 +179,39 @@ def remove_all_priviledged_users(
     )
     db.commit()
 
+def request_info_for_id(
+        current_user: CurrentUser,
+        info_id: str,
+        db: Session
+    ):
+    info = fetch_shared_info_by_ids(ids=[info_id], db=db)
+    return info
 
+def share_object(
+    current_user: CurrentUser,
+    id: str,
+    label: str,
+    confidence: float,
+    coord_x: float,
+    coord_y: float,
+    content_json: str,
+    db: Session
+) -> str | None:
+    shared = SharedInformation(
+        id=id,
+        user_id=current_user.id,
+        object=label,
+        confidence=confidence,
+        coord_x=coord_x,
+        coord_y=coord_y
+    )
+    db.add(shared)
+    db.flush()
+
+    retrieved = RetrievedInformation(
+        shared_id=shared.id,
+        content_json=content_json
+    )
+    db.add(retrieved)
+    db.commit()
+    return str(id)

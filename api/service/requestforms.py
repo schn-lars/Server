@@ -70,13 +70,12 @@ class Item(BaseModel):
 
 class ShareData(BaseModel):
     id: str
-    object: str
+    obj: str
     confidence: float
     lat: float
     lon: float
-    lastSpotted: int
     img: str
-    items: Optional[Dict[str, Dict[str, Any]]] = None
+    json: str | None
 
 class TextInput(BaseModel):
     text: str

@@ -1,15 +1,18 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, Form, UploadFile, File
 from fastapi.responses import JSONResponse
-from service.requestforms import ShareData, UUIDPayload
+from service.requestforms import ShareData, UUIDPayload, FetchSharedIdsRequest
 import threading
 from service import share
 from service.session import get_db
 from service.users import CurrentUser
 from sqlalchemy.orm import Session
+import json, os, shutil
 
 share_api_router = APIRouter(
     prefix="/api/share"
 )
+
+UPLOAD_DIR_CROPPED = "uploads/shared-crops"
 
 shared_items = {}
 share_lock_holmes = threading.Lock()
@@ -152,4 +155,95 @@ async def remove_user_from_shared_information(
             db=db
         )
     except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+@share_api_router.get("/info")
+async def request_info_for_id(
+    current_user: CurrentUser,
+    info_id: str,
+    db: Session = Depends(get_db)
+):
+    try:
+        rows = share.fetch_shared_info_by_ids([info_id], db)
+
+        if not rows:
+            return JSONResponse(status_code=404, content={"error": "Not found"})
+
+        shared, retrieved, user = rows[0]
+        return {
+            "id": str(shared.id),
+            "owner": user.username,
+            "obj": shared.object,
+            "confidence": shared.confidence,
+            "json": json.loads(retrieved.content_json)
+        }
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@share_api_router.get("/proximity-info")
+async def request_info_for_id(
+    current_user: CurrentUser,
+    coord_x: float,
+    coord_y: float,
+    db: Session = Depends(get_db)
+):
+    try:
+        rows = share.fetch_shared_by_proximity(
+            request=FetchSharedIdsRequest(
+                coord_x=coord_x,
+                coord_y=coord_y
+            )
+        )
+
+        if not rows:
+            return JSONResponse(status_code=404, content={"error": "Not found"})
+
+        shared, retrieved, user = rows[0]
+        return {
+            "id": str(shared.id),
+            "owner": user.username,
+            "obj": shared.object,
+            "confidence": shared.confidence,
+            "json": json.loads(retrieved.content_json),
+            "image_url": f"/static/{shared.id}.jpg"
+        }
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@share_api_router.post("/share-info")
+async def share_object(
+    current_user: CurrentUser,
+    id: str = Form(...),
+    label: str = Form(...),
+    confidence: float = Form(...),
+    coord_x: float = Form(...),
+    coord_y: float = Form(...),
+    content_json: str = Form(...),
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    try:
+        share.share_object(
+            id=id,
+            current_user=current_user,
+            label=label,
+            confidence=confidence,
+            coord_x=coord_x,
+            coord_y=coord_y,
+            content_json=content_json,
+            db=db
+        )
+
+        ext = os.path.splitext(image.filename)[1] or ".jpg"
+        filename = f"{id}{ext}"
+        file_path = os.path.join(UPLOAD_DIR_CROPPED, filename)
+        with open(file_path, "wb") as f:
+            shutil.copyfileobj(image.file, f)
+        return { "status": True }
+    except Exception as e:
+        db.rollback()
+        if os.path.exists(file_path):
+            os.remove(file_path)
         return JSONResponse(content={"error": str(e)}, status_code=500)
