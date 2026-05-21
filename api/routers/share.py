@@ -193,20 +193,24 @@ async def request_info_for_id(
             request=FetchSharedIdsRequest(
                 coord_x=coord_x,
                 coord_y=coord_y
-            )
+            ),
+            db=db
         )
 
-        if not rows:
-            return JSONResponse(status_code=404, content={"error": "Not found"})
+        #if not rows:
+        #    return JSONResponse(status_code=404, content={"error": "Not found"})
 
-        shared, retrieved, user = rows[0]
-        return {
-            "id": str(shared.id),
-            "owner": user.username,
-            "obj": shared.object,
-            "confidence": shared.confidence,
-            "json": json.loads(retrieved.content_json),
-            "image_url": f"/static/{shared.id}.jpg"
+        return \
+        { "rows" : [
+            {
+                "id": str(shared.id),
+                "owner": user.username,
+                "obj": shared.object,
+                "confidence": shared.confidence,
+                "json": json.loads(retrieved.content_json),
+                "image_url": f"/static/{shared.id}.jpg"
+            }
+            for shared, retrieved, user in rows]
         }
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)

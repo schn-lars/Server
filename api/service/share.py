@@ -5,6 +5,7 @@ from service.requestforms import ShareInformationRequest, FetchSharedIdsRequest
 from service.entities import SharedInformation, RetrievedInformation, User, ShareMapping
 from service.users import CurrentUser
 import uuid
+import math
 
 def fetch_shared_info_by_ids(ids: list[str], db: Session):
     try:
@@ -22,13 +23,28 @@ def fetch_shared_info_by_ids(ids: list[str], db: Session):
 
 def fetch_shared_by_proximity(request: FetchSharedIdsRequest, db: Session, radius_in_meters: int = 20) -> list[str]:
     try:
+        center_lat = request.coord_y
+        center_lon = request.coord_x
+
+        latMetersPerDeg = 111_100
+        longMetersPerDeg = 111_100 * math.cos(math.radians(center_lat))
+
+        lat_delta = radius_in_meters / latMetersPerDeg # this is a box around essentially, however in a small scale I guess it works
+        lon_delta = radius_in_meters / longMetersPerDeg
         return (
             db.query(SharedInformation, RetrievedInformation, User)
             .join(RetrievedInformation, RetrievedInformation.id == SharedInformation.id)
             .join(User, User.id == SharedInformation.user_id)
             .filter(SharedInformation.public == True)
-            .filter(SharedInformation.coord_y.between(SharedInformation.coord_y - radius_in_meters, SharedInformation.coord_y + radius_in_meters))
-            .filter(SharedInformation.coord_x.between(SharedInformation.coord_x - radius_in_meters, SharedInformation.coord_x + radius_in_meters))
+            .filter(SharedInformation.coord_y.between(
+                center_lat - lat_delta,
+                center_lat + lat_delta
+            ))
+            .filter(SharedInformation.coord_x.between(
+                center_lon - lon_delta,
+                center_lon + lon_delta
+            ))
+            .limit(5)
             .all()
         )
     except Exception as e:
