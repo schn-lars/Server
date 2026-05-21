@@ -207,6 +207,8 @@ async def request_info_for_id(
                 "owner": user.username,
                 "obj": shared.object,
                 "confidence": shared.confidence,
+                "coord_x": shared.coord_x,
+                "coord_y": shared.coord_y,
                 "json": json.loads(retrieved.content_json),
                 "image_url": f"/static/{shared.id}.jpg"
             }
