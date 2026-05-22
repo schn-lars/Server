@@ -87,7 +87,7 @@ class SharedInformation(Base):
     
     object: Mapped[str] = mapped_column(String, nullable=False)
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
-    public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     coord_x = Column(Numeric(18, 15), nullable=True)
     coord_y = Column(Numeric(18, 15), nullable=True)
 
