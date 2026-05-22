@@ -229,5 +229,4 @@ def share_object(
         content_json=content_json
     )
     db.add(retrieved)
-    db.commit()
     return str(id)

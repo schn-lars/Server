@@ -247,9 +247,10 @@ async def share_object(
         file_path = os.path.join(UPLOAD_DIR_CROPPED, filename)
         with open(file_path, "wb") as f:
             shutil.copyfileobj(image.file, f)
+        db.commit()
         return { "status": True }
     except Exception as e:
         db.rollback()
-        if os.path.exists(file_path):
+        if file_path and os.path.exists(file_path):
             os.remove(file_path)
         return JSONResponse(content={"error": str(e)}, status_code=500)
