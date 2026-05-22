@@ -75,7 +75,7 @@ class ShareData(BaseModel):
     lat: float
     lon: float
     img: str
-    json: str | None
+    content_json: str | None
 
 class TextInput(BaseModel):
     text: str

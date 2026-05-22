@@ -225,7 +225,7 @@ def share_object(
     db.flush()
 
     retrieved = RetrievedInformation(
-        shared_id=shared.id,
+        id=shared.id,
         content_json=content_json
     )
     db.add(retrieved)
