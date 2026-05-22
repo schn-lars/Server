@@ -215,7 +215,7 @@ def share_object(
 ) -> str | None:
     shared = SharedInformation(
         id=id,
-        user_id=current_user.id,
+        user_id=current_user.user_id,
         object=label,
         confidence=confidence,
         coord_x=coord_x,
