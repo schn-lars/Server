@@ -17,8 +17,9 @@ services:
       POSTGRES_HOST: db
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_DB}
     volumes:
-      - ./outputs:/outputs
+      - ./outputs:/app/outputs
       - ./intenso.log:/app/intenso.log
+      - ./uploads/shared-crops:/app/uploads/shared-crops
 
   watchtower:
     image: containrrr/watchtower
