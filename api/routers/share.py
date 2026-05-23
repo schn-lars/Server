@@ -13,7 +13,7 @@ share_api_router = APIRouter(
     prefix="/api/share"
 )
 
-UPLOAD_DIR_CROPPED = "uploads/shared-crops"
+UPLOAD_DIR_CROPPED = "/uploads/shared-crops"
 
 shared_items = {}
 share_lock_holmes = threading.Lock()
@@ -231,9 +231,11 @@ async def share_object(
     image: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+    file_path = None
     try:
         ext = os.path.splitext(image.filename)[1] or ".jpg"
         filename = f"{id}{ext}"
+        os.makedirs(UPLOAD_DIR_CROPPED, exist_ok=True)
         file_path = os.path.join(UPLOAD_DIR_CROPPED, filename)
         with open(file_path, "wb") as f:
             shutil.copyfileobj(image.file, f)
