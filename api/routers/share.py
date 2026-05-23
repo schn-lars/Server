@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, Form, UploadFile, File
+from fastapi import APIRouter, Request, Depends, Form, UploadFile, File, FileResponse
 from fastapi.responses import JSONResponse
 from service.requestforms import ShareData, UUIDPayload, FetchSharedIdsRequest
 import threading
@@ -8,12 +8,13 @@ from service.users import CurrentUser
 from sqlalchemy.orm import Session
 import json, os, shutil
 import traceback
+from pathlib import Path
 
 share_api_router = APIRouter(
     prefix="/api/share"
 )
 
-UPLOAD_DIR_CROPPED = "/uploads/shared-crops"
+UPLOAD_DIR_CROPPED = "/app/uploads/shared-crops"
 
 shared_items = {}
 share_lock_holmes = threading.Lock()
@@ -211,7 +212,7 @@ async def request_info_for_id(
                 "coord_x": shared.coord_x,
                 "coord_y": shared.coord_y,
                 "json": json.loads(retrieved.content_json),
-                "image_url": f"/static/{shared.id}.jpg"
+                "image_url": f"http://10.34.64.165:6969/api/share/get-image/{shared.id}.jpg"
             }
             for shared, retrieved, user in rows]
         }
@@ -234,6 +235,8 @@ async def share_object(
     file_path = None
     try:
         ext = os.path.splitext(image.filename)[1] or ".jpg"
+        if not ext:
+            ext = ".jpg"
         filename = f"{id}{ext}"
         os.makedirs(UPLOAD_DIR_CROPPED, exist_ok=True)
         file_path = os.path.join(UPLOAD_DIR_CROPPED, filename)
@@ -259,3 +262,22 @@ async def share_object(
         if file_path and os.path.exists(file_path):
             os.remove(file_path)
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+
+
+@share_api_router.get("/get-image/{filename}")
+async def get_shared_image(filename: str):
+    try:
+        file_path = Path(UPLOAD_DIR_CROPPED) / filename
+        if not file_path.exists():
+            return JSONResponse(
+                status_code=404,
+                content={"error": "Image not found"}
+            )
+        return FileResponse(file_path)
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
