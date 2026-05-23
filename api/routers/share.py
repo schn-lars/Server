@@ -7,6 +7,7 @@ from service.session import get_db
 from service.users import CurrentUser
 from sqlalchemy.orm import Session
 import json, os, shutil
+import traceback
 
 share_api_router = APIRouter(
     prefix="/api/share"
@@ -231,6 +232,12 @@ async def share_object(
     db: Session = Depends(get_db)
 ):
     try:
+        ext = os.path.splitext(image.filename)[1] or ".jpg"
+        filename = f"{id}{ext}"
+        file_path = os.path.join(UPLOAD_DIR_CROPPED, filename)
+        with open(file_path, "wb") as f:
+            shutil.copyfileobj(image.file, f)
+
         share.share_object(
             id=id,
             current_user=current_user,
@@ -242,14 +249,10 @@ async def share_object(
             db=db
         )
 
-        ext = os.path.splitext(image.filename)[1] or ".jpg"
-        filename = f"{id}{ext}"
-        file_path = os.path.join(UPLOAD_DIR_CROPPED, filename)
-        with open(file_path, "wb") as f:
-            shutil.copyfileobj(image.file, f)
         db.commit()
         return { "status": True }
     except Exception as e:
+        traceback.print_exc()
         db.rollback()
         if file_path and os.path.exists(file_path):
             os.remove(file_path)
