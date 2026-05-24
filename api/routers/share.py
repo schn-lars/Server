@@ -240,8 +240,10 @@ async def share_object(
         filename = f"{id}{ext}"
         os.makedirs(UPLOAD_DIR_CROPPED, exist_ok=True)
         file_path = os.path.join(UPLOAD_DIR_CROPPED, filename)
+
+        contents = await image.read()
         with open(file_path, "wb") as f:
-            shutil.copyfileobj(image.file, f)
+            f.write(contents)
 
         share.share_object(
             id=id,
