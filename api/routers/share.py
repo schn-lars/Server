@@ -212,7 +212,7 @@ async def request_info_for_id(
                 "coord_x": shared.coord_x,
                 "coord_y": shared.coord_y,
                 "json": json.loads(retrieved.content_json),
-                "image_url": f"http://10.34.64.165:6969/api/share/get-image/{shared.id}.jpg"
+                "image_url": f"http://10.34.64.165:6969/api/share/get-image/{str(shared.id).upper()}.jpg"
             }
             for shared, retrieved, user in rows]
         }
