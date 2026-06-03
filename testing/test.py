@@ -46,7 +46,7 @@ def export_yolo_model(words: list[str]):
     model.set_classes(words)  # your vocab
 
     # Export to CoreML
-    model.export(format="coreml", nms=True)
+    model.save('yolov8s-world-custom.pt')
 
 # Code from raphael
 
@@ -224,5 +224,7 @@ print(f"Loaded {len(raw_words)} raw words.")
 filtered = heuristic_prefilter(raw_words)
 print(f"After heuristic prefilter: {len(filtered)} candidate words.")
 
-print(filtered)
-export_yolo_model(words=filtered)
+if __name__ == "__main__":
+    #print(filtered)
+    export_yolo_model(words=filtered)
+    #print_model_info()

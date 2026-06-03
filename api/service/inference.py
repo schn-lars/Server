@@ -8,6 +8,7 @@ from service.utils import logging
 from fastapi import UploadFile
 import torch
 
+YOLO_WORLD_CUSTOM = 'yolov8s-world-custom.pt'
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # https://docs.ultralytics.com/models/sam-3/#segment-with-text-prompts
@@ -50,17 +51,27 @@ class InferenceSession:
         if model_type == "YOLOv26":
             self.yolo_model = YOLO("yolo26s-seg.pt" if task == 'Segmentation' else 'yolo26s.pt')
             self.yolo_model.to(DEVICE)
+            self.sam_predictor = None
             self.model_type = model_type
             self.task = task
 
         elif model_type == "YOLOv11":
             self.yolo_model = YOLO("yolo11s-seg.pt" if task == 'Segmentation' else 'yolo11s.pt')
             self.yolo_model.to(DEVICE)
+            self.sam_predictor = None
             self.model_type = model_type
             self.task = task
 
         elif model_type == "SAM3":
             self.sam_predictor = SAM3SemanticPredictor(overrides={**overrides, "device": DEVICE})
+            self.yolo_model = None
+            self.model_type = model_type
+            self.task = task
+        
+        elif model_type == "WORLD":
+            self.yolo_model = YOLO(YOLO_WORLD_CUSTOM)
+            self.yolo_model.to(DEVICE)
+            self.sam_predictor = None
             self.model_type = model_type
             self.task = task
 
@@ -116,6 +127,31 @@ class InferenceSession:
                     [297.5180358886719, 389.44091796875, 425.7095642089844, 479.23895263671875]
                 We can clearly see that arr[0] < arr[2] and arr[1] < arr[3]
             '''
+            return {
+                "type": self.task,
+                "observations": [
+                    {
+                        "id": str(uuid.uuid4()),
+                        "label": str(c),
+                        "confidence": float(s),
+                        "bbox": {
+                            "x": float(x1) / width,
+                            "y": float(y1) / height,
+                            "width": float(x2 - x1) / width,
+                            "height": float(y2 - y1) / height
+                        },
+                        "worldPosition": None
+                    }
+                    for (x1, y1, x2, y2), s, c in zip(
+                        r.boxes.xyxy.tolist(), 
+                        r.boxes.conf.tolist(),
+                        [r.names[idx] for idx in r.boxes.cls.tolist()]
+                    )
+                ]
+            }
+        elif self.model_type == 'WORLD':
+            result = self.yolo_model.predict(img)
+            r = result[0]
             return {
                 "type": self.task,
                 "observations": [
