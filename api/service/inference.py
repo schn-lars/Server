@@ -48,6 +48,7 @@ class InferenceSession:
         @param task:      [Segmentation, Detection] 
     '''
     def load_model(self, model_type: str, task: str):
+        print("load_model:", model_type)
         if model_type == "YOLOv26":
             self.yolo_model = YOLO("yolo26s-seg.pt" if task == 'Segmentation' else 'yolo26s.pt')
             self.yolo_model.to(DEVICE)
