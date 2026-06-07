@@ -25,6 +25,8 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy rest of the code
 COPY . /app
 
+RUN git clone https://github.com/ChaoningZhang/MobileSAM.git
+
 RUN pip install --no-cache-dir -e ./MobileSAM
 
 EXPOSE 6969
