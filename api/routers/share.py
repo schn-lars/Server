@@ -283,3 +283,15 @@ async def get_shared_image(filename: str):
             status_code=500,
             content={"error": str(e)}
         )
+    
+@share_api_router.get("/clear")
+async def clear_all_shared(db: Session = Depends(get_db)):
+    try:
+        share.clear_all_shared(db=db)
+        share.clear_folder(folder_path=UPLOAD_DIR_CROPPED)
+        return { "status": True }
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )

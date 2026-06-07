@@ -6,6 +6,7 @@ from service.entities import SharedInformation, RetrievedInformation, User, Shar
 from service.users import CurrentUser
 import uuid
 import math
+from pathlib import Path
 
 def fetch_shared_info_by_ids(ids: list[str], db: Session):
     try:
@@ -230,3 +231,15 @@ def share_object(
     )
     db.add(retrieved)
     return str(id)
+
+
+def clear_all_shared(db: Session) -> None:
+    db.query(SharedInformation).delete()
+    db.query(RetrievedInformation).delete()
+    db.commit()
+
+def clear_folder(folder_path: str):
+    folder = Path(folder_path)
+    for file in folder.iterdir():
+        if file.is_file():
+            file.unlink()
