@@ -23,7 +23,11 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 # Copy rest of the code
+RUN pwd
+
 COPY . /app
+
+RUN find /app/MobileSAM | head -50
 
 RUN pwd && ls -la
 RUN ls -la /app
