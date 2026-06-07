@@ -4,9 +4,9 @@ import time
 from PIL import Image
 import io
 import uuid
-from service.utils import logging
-from fastapi import UploadFile
+import numpy as np
 import torch
+from mobile_sam import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
 
 YOLO_WORLD_CUSTOM = 'yolov8s-world-custom.pt'
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -72,10 +72,17 @@ class InferenceSession:
         elif model_type == "WORLD":
             self.yolo_model = YOLO(YOLO_WORLD_CUSTOM)
             self.yolo_model.to(DEVICE)
-            self.sam_predictor = None
             self.model_type = model_type
             self.task = task
 
+            if self.task == "Segmentation":
+                sam = sam_model_registry["vit_t"](
+                    checkpoint="mobile_sam.pt"
+                )
+                sam.to(DEVICE)
+                self.sam_predictor = SamPredictor(sam)
+            else:
+                self.sam_predictor = None
         else:
             print("load_model() ERROR - Unknown model", model_type)
             raise ValueError("Unknown model")
@@ -151,30 +158,60 @@ class InferenceSession:
                 ]
             }
         elif self.model_type == 'WORLD':
-            result = self.yolo_model.predict(img)
-            r = result[0]
-            return {
-                "type": self.task,
-                "observations": [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "label": str(c),
-                        "confidence": float(s),
-                        "bbox": {
-                            "x": float(x1) / width,
-                            "y": float(y1) / height,
-                            "width": float(x2 - x1) / width,
-                            "height": float(y2 - y1) / height
-                        },
-                        "worldPosition": None
-                    }
-                    for (x1, y1, x2, y2), s, c in zip(
-                        r.boxes.xyxy.tolist(), 
-                        r.boxes.conf.tolist(),
-                        [r.names[idx] for idx in r.boxes.cls.tolist()]
+            if self.task == 'Segmentation':
+                result = self.yolo_model.predict(img)
+                r = result[0]
+                boxes = r.boxes.xyxy.tolist()
+                scores = r.boxes.conf.tolist()
+                classes = [r.names[idx] for idx in r.boxes.cls.tolist()]
+                self.sam_predictor.set_image(np.array(img))
+                obs = []
+                for box, score, cls in zip(boxes, scores, classes):
+                    masks, _, _ = self.yolo_model.predict(
+                        box=box,
+                        multimask_output=False
                     )
-                ]
-            }
+                    mask = masks[0]
+                    obs.append({
+                        "label": str(cls),
+                        "confidence": float(score),
+                        "bbox": {
+                                "x": float(box[0]) / width,
+                                "y": float(box[1]) / height,
+                                "width": float(box[2] - box[0]) / width,
+                                "height": float(box[3] - box[1]) / height
+                            },
+                        "mask": mask.astype(np.uint8).tolist()
+                    })
+                return {
+                    "type": self.task,
+                    "observations" : obs
+                }
+            else:
+                result = self.yolo_model.predict(img)
+                r = result[0]
+                return {
+                    "type": self.task,
+                    "observations": [
+                        {
+                            "id": str(uuid.uuid4()),
+                            "label": str(c),
+                            "confidence": float(s),
+                            "bbox": {
+                                "x": float(x1) / width,
+                                "y": float(y1) / height,
+                                "width": float(x2 - x1) / width,
+                                "height": float(y2 - y1) / height
+                            },
+                            "worldPosition": None
+                        }
+                        for (x1, y1, x2, y2), s, c in zip(
+                            r.boxes.xyxy.tolist(), 
+                            r.boxes.conf.tolist(),
+                            [r.names[idx] for idx in r.boxes.cls.tolist()]
+                        )
+                    ]
+                }
         else:
             print(f"predict() ERROR - Unknown model:", self.model_type)
             raise RuntimeError("Model not loaded")
