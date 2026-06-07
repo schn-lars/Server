@@ -23,17 +23,14 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 # Copy rest of the code
-RUN pwd
 
 COPY . /app
 
-RUN find /app/MobileSAM | head -50
+RUN apt-get update && apt-get install -y git
 
-RUN pwd && ls -la
-RUN ls -la /app
-RUN ls -la /app/MobileSAM
+RUN git clone https://github.com/ChaoningZhang/MobileSAM.git /opt/MobileSAM
 
-RUN pip install --no-cache-dir -e ./MobileSAM
+RUN pip install -e /opt/MobileSAM
 
 EXPOSE 6969
 
