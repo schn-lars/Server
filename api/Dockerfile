@@ -25,6 +25,10 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy rest of the code
 COPY . /app
 
+RUN pwd && ls -la
+RUN ls -la /app
+RUN ls -la /app/MobileSAM
+
 RUN pip install --no-cache-dir -e ./MobileSAM
 
 EXPOSE 6969
