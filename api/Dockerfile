@@ -25,6 +25,8 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy rest of the code
 COPY . /app
 
+RUN pip install --no-cache-dir -e ./MobileSAM
+
 EXPOSE 6969
 
 # Launch FastAPI

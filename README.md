@@ -30,6 +30,9 @@ Additionally, we have provided ``mock.env``-files in all directories. These will
 1. ``docker build -t api ./api``
 2. ``docker run -d --env-file ./api/.env --name api --network network --mount type=bind,source="$(pwd)/api",target=/app -p 6969:6969 api``
 
+### Inference
+1. Clone mobile sam repo onto node: ``git clone https://github.com/ChaoningZhang/MobileSAM.git``
+
 ### Smol
 This container is designed to run in an environment with access to a GPU.
 Since we are using NVIDIA GeForce RTX 4090, we needed to run some commands before.
