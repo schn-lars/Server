@@ -21,3 +21,4 @@ pyspark
 ultralytics
 python-dotenv
 websockets
+timm

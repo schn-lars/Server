@@ -167,8 +167,8 @@ class InferenceSession:
                 self.sam_predictor.set_image(np.array(img))
                 obs = []
                 for box, score, cls in zip(boxes, scores, classes):
-                    masks, _, _ = self.yolo_model.predict(
-                        box=box,
+                    masks, _, _ = self.sam_predictor.predict(
+                        box=np.array(box),
                         multimask_output=False
                     )
                     mask = masks[0]
