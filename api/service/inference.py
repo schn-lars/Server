@@ -7,6 +7,7 @@ import uuid
 import numpy as np
 import torch
 from mobile_sam import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
+import base64
 
 YOLO_WORLD_CUSTOM = 'yolov8s-world-custom.pt'
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -174,6 +175,11 @@ class InferenceSession:
                         multimask_output=False
                     )
                     mask = masks[0]
+                    mask_img = Image.fromarray(mask.astype(np.uint8) * 255)
+                    mask_resized = mask_img.resize((256, 256), Image.NEAREST)
+                    mask_np = np.array(mask_resized)
+                    mask_bytes = (mask_np > 0).astype(np.uint8).tobytes()
+                    mask_b64 = base64.b64encode(mask_bytes).decode('utf-8')
                     obs.append({
                         "label": str(cls),
                         "confidence": float(score),
@@ -183,7 +189,9 @@ class InferenceSession:
                                 "width": float(box[2] - box[0]) / width,
                                 "height": float(box[3] - box[1]) / height
                             },
-                        "mask": mask.astype(np.uint8).tolist()
+                        "mask": mask_b64,
+                        "mask_width": int(mask.shape[1]),
+                        "mask_height": int(mask.shape[0])
                     })
                 return {
                     "type": self.task,
