@@ -38,6 +38,7 @@ class InferenceSession:
         self.sam_predictor = None
         self.yolo_model = None
         self.task = None
+        self.streaming = True
     
     # might be useful
     def has_default_prompt(self) -> bool:
@@ -48,7 +49,8 @@ class InferenceSession:
         @param task:      [Segmentation, Detection] 
     '''
     def load_model(self, model_type: str, task: str):
-        print("load_model:", model_type, self.task)
+        print("load_model:", model_type, task)
+        task = task if task else "Detection"
         if model_type == "YOLOv26":
             self.yolo_model = YOLO("yolo26s-seg.pt" if task == 'Segmentation' else 'yolo26s.pt')
             self.yolo_model.to(DEVICE)
@@ -77,7 +79,7 @@ class InferenceSession:
 
             if self.task == "Segmentation":
                 sam = sam_model_registry["vit_t"](
-                    checkpoint="mobile_sam.pt"
+                    checkpoint="/opt/MobileSAM/weights/mobile_sam.pt"
                 )
                 sam.to(DEVICE)
                 self.sam_predictor = SamPredictor(sam)
