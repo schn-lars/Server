@@ -52,6 +52,10 @@ class InferenceSession:
     def load_model(self, model_type: str, task: str):
         print("load_model:", model_type, task)
         task = task if task else "Detection"
+        if self.task == task and self.model_type == model_type:
+            print("load_model: No changes needed. Already running this mode.")
+            return
+
         if model_type == "YOLOv26":
             self.yolo_model = YOLO("yolo26s-seg.pt" if task == 'Segmentation' else 'yolo26s.pt')
             self.yolo_model.to(DEVICE)
