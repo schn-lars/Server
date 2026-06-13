@@ -1,0 +1,8 @@
+pillow
+ultralytics
+numpy
+torch
+websockets
+timm
+transformers
+fastapi
