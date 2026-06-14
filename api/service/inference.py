@@ -100,8 +100,9 @@ class InferenceSession:
 
         if self.model_type == "SAM3":
             start = time.time()
-            results = self.sam_predictor.set_image(img)
+            self.sam_predictor.set_image(img)
             # TODO: check return value here
+            results = self.sam_predictor(text=self.prompt)
             r = results[0]
 
             obs = []

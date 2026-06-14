@@ -6,6 +6,7 @@ import io
 import uuid
 import numpy as np
 import torch
+import torch.nn.functional as F
 from mobile_sam import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
 import base64
 
@@ -99,41 +100,96 @@ class InferenceSession:
         width, height = img.size
 
         if self.model_type == "SAM3":
+            start = time.time()
             self.sam_predictor.set_image(img)
             # TODO: check return value here
-            return self.sam_predictor(text=self.prompt)
-
-        elif self.task == "Segmentation" and self.model_type.startswith('YOLO'):
-            results = self.yolo_model.predict(img)
+            results = self.sam_predictor(text=self.prompt)
             r = results[0]
 
-            # TODO: we also need to return the actual masks here. This is not yet happening.
-            print(r)
-            return {
-                "type": self.task,
-                "observations": [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "label": str(int(c)),
-                        "confidence": float(s),
+            obs = []
+            if r.masks is not None and r.boxes is not None:
+                masks_gpu = r.masks.data
+                masks_resized = F.interpolate(
+                    masks_gpu.unsqueeze(1),
+                    size=(256, 256),
+                    mode='nearest'
+                ).squeeze(1)
+                boxes = r.boxes.xyxy.tolist()
+                scores = r.boxes.conf.tolist()
+                classes = [r.names[idx] for idx in r.boxes.cls.tolist()]
+                masks_np = (masks_resized > 0.5).to(torch.uint8).cpu().numpy()
+
+                for mask_np, box, score, cls in zip(masks_np, boxes, scores, classes):
+                    mask_bytes = mask_np.tobytes()
+                    mask_b64 = base64.b64encode(mask_bytes).decode('utf-8')
+
+                    x1, y1, x2, y2 = box
+                    obs.append({
+                        "label": str(cls),
+                        "confidence": float(score),
                         "bbox": {
                             "x": float(x1) / width,
                             "y": float(y1) / height,
                             "width": float(x2 - x1) / width,
                             "height": float(y2 - y1) / height
                         },
-                        "worldPosition": None
-                    }
-                    for (x1, y1, x2, y2), s, c in zip(
-                        r.boxes.xyxy.tolist(),
-                        r.boxes.conf.tolist(),
-                        r.boxes.cls.tolist()
-                    )
-                ]
+                        "mask": mask_b64,
+                        "mask_width": 256,
+                        "mask_height": 256
+                    })
+            return {
+                "type": self.task,
+                "observations": obs,
+                "time": time.time() - start
+            }
+
+        elif self.task == "Segmentation" and self.model_type.startswith('YOLO'):
+            start = time.time()
+            results = self.yolo_model.predict(img)
+            r = results[0]
+
+            # TODO: we also need to return the actual masks here. This is not yet happening.
+            #print(r)
+            obs = []
+            if r.masks is not None:
+                masks_gpu = r.masks.data
+                masks_resized = F.interpolate(
+                    masks_gpu.unsqueeze(1),
+                    size=(256, 256),
+                    mode='nearest'
+                ).squeeze(1)
+                boxes = r.boxes.xyxy.tolist()
+                scores = r.boxes.conf.tolist()
+                classes = [r.names[idx] for idx in r.boxes.cls.tolist()]
+                masks_np = (masks_resized > 0.5).to(torch.uint8).cpu().numpy()
+
+                for mask_np, box, score, cls in zip(masks_np, boxes, scores, classes):
+                    mask_bytes = mask_np.tobytes()
+                    mask_b64 = base64.b64encode(mask_bytes).decode('utf-8')
+
+                    x1, y1, x2, y2 = box
+                    obs.append({
+                        "label": str(cls),
+                        "confidence": float(score),
+                        "bbox": {
+                            "x": float(x1) / width,
+                            "y": float(y1) / height,
+                            "width": float(x2 - x1) / width,
+                            "height": float(y2 - y1) / height
+                        },
+                        "mask": mask_b64,
+                        "mask_width": 256,
+                        "mask_height": 256
+                    })
+            return {
+                "type": self.task,
+                "observations": obs,
+                "time": time.time() - start
             }
 
 
         elif self.task == "Detection" and self.model_type.startswith('YOLO'):
+            start = time.time()
             result = self.yolo_model.predict(img)
             r = result[0]
             '''
@@ -162,9 +218,11 @@ class InferenceSession:
                         r.boxes.conf.tolist(),
                         [r.names[idx] for idx in r.boxes.cls.tolist()]
                     )
-                ]
+                ],
+                "time": time.time() - start
             }
         elif self.model_type == 'WORLD':
+            start = time.time()
             if self.task == 'Segmentation':
                 result = self.yolo_model.predict(img)
                 r = result[0]
@@ -199,9 +257,11 @@ class InferenceSession:
                     })
                 return {
                     "type": self.task,
-                    "observations" : obs
+                    "observations" : obs,
+                    "time": time.time() - start
                 }
             else:
+                start = time.time()
                 result = self.yolo_model.predict(img)
                 r = result[0]
                 return {
@@ -224,7 +284,8 @@ class InferenceSession:
                             r.boxes.conf.tolist(),
                             [r.names[idx] for idx in r.boxes.cls.tolist()]
                         )
-                    ]
+                    ],
+                    "time": time.time() - start
                 }
         else:
             print(f"predict() ERROR - Unknown model:", self.model_type)
