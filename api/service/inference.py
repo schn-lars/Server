@@ -99,11 +99,47 @@ class InferenceSession:
         width, height = img.size
 
         if self.model_type == "SAM3":
-            self.sam_predictor.set_image(img)
+            start = time.time()
+            results = self.sam_predictor.set_image(img)
             # TODO: check return value here
-            return self.sam_predictor(text=self.prompt)
+            r = results[0]
+
+            obs = []
+            if r.masks is not None and r.boxes is not None:
+                masks = r.masks.data.cpu().numpy()
+                boxes = r.boxes.xyxy.tolist()
+                scores = r.boxes.conf.tolist()
+                classes = [r.names[idx] for idx in r.boxes.cls.tolist()]
+
+                for mask, box, score, cls in zip(masks, boxes, scores, classes):
+                    mask_img = Image.fromarray((mask * 255).astype(np.uint8))
+                    mask_resized = mask_img.resize((256, 256), Image.NEAREST)
+                    mask_np = np.array(mask_resized)
+                    mask_bytes = (mask_np > 0).astype(np.uint8).tobytes()
+                    mask_b64 = base64.b64encode(mask_bytes).decode('utf-8')
+
+                    x1, y1, x2, y2 = box
+                    obs.append({
+                        "label": str(cls),
+                        "confidence": float(score),
+                        "bbox": {
+                            "x": float(x1) / width,
+                            "y": float(y1) / height,
+                            "width": float(x2 - x1) / width,
+                            "height": float(y2 - y1) / height
+                        },
+                        "mask": mask_b64,
+                        "mask_width": 256,
+                        "mask_height": 256
+                    })
+            return {
+                "type": self.task,
+                "observations": obs,
+                "time": start - time.time()
+            }
 
         elif self.task == "Segmentation" and self.model_type.startswith('YOLO'):
+            start = time.time()
             results = self.yolo_model.predict(img)
             r = results[0]
 
@@ -139,11 +175,13 @@ class InferenceSession:
                     })
             return {
                 "type": self.task,
-                "observations": obs
+                "observations": obs,
+                "time": start - time.time()
             }
 
 
         elif self.task == "Detection" and self.model_type.startswith('YOLO'):
+            start = time.time()
             result = self.yolo_model.predict(img)
             r = result[0]
             '''
@@ -172,9 +210,11 @@ class InferenceSession:
                         r.boxes.conf.tolist(),
                         [r.names[idx] for idx in r.boxes.cls.tolist()]
                     )
-                ]
+                ],
+                "time": start - time.time()
             }
         elif self.model_type == 'WORLD':
+            start = time.time()
             if self.task == 'Segmentation':
                 result = self.yolo_model.predict(img)
                 r = result[0]
@@ -209,9 +249,11 @@ class InferenceSession:
                     })
                 return {
                     "type": self.task,
-                    "observations" : obs
+                    "observations" : obs,
+                    "time": start - time.time()
                 }
             else:
+                start = time.time()
                 result = self.yolo_model.predict(img)
                 r = result[0]
                 return {
@@ -234,7 +276,8 @@ class InferenceSession:
                             r.boxes.conf.tolist(),
                             [r.names[idx] for idx in r.boxes.cls.tolist()]
                         )
-                    ]
+                    ],
+                    "time": start - time.time()
                 }
         else:
             print(f"predict() ERROR - Unknown model:", self.model_type)
