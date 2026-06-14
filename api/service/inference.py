@@ -135,7 +135,7 @@ class InferenceSession:
             return {
                 "type": self.task,
                 "observations": obs,
-                "time": start - time.time()
+                "time": time.time() - start
             }
 
         elif self.task == "Segmentation" and self.model_type.startswith('YOLO'):
@@ -176,7 +176,7 @@ class InferenceSession:
             return {
                 "type": self.task,
                 "observations": obs,
-                "time": start - time.time()
+                "time": time.time() - start
             }
 
 
@@ -211,7 +211,7 @@ class InferenceSession:
                         [r.names[idx] for idx in r.boxes.cls.tolist()]
                     )
                 ],
-                "time": start - time.time()
+                "time": time.time() - start
             }
         elif self.model_type == 'WORLD':
             start = time.time()
@@ -250,7 +250,7 @@ class InferenceSession:
                 return {
                     "type": self.task,
                     "observations" : obs,
-                    "time": start - time.time()
+                    "time": time.time() - start
                 }
             else:
                 start = time.time()
@@ -277,7 +277,7 @@ class InferenceSession:
                             [r.names[idx] for idx in r.boxes.cls.tolist()]
                         )
                     ],
-                    "time": start - time.time()
+                    "time": time.time() - start
                 }
         else:
             print(f"predict() ERROR - Unknown model:", self.model_type)
