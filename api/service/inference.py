@@ -108,28 +108,38 @@ class InferenceSession:
             r = results[0]
 
             # TODO: we also need to return the actual masks here. This is not yet happening.
-            print(r)
-            return {
-                "type": self.task,
-                "observations": [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "label": str(int(c)),
-                        "confidence": float(s),
+            #print(r)
+            obs = []
+            if r.masks is not None:
+                masks = r.masks.data.cpu().numpy()
+                boxes = r.boxes.xyxy.tolist()
+                scores = r.boxes.conf.tolist()
+                classes = [r.names[idx] for idx in r.boxes.cls.tolist()]
+
+                for mask, box, score, cls in zip(masks, boxes, scores, classes):
+                    mask_img = Image.fromarray((mask * 255).astype(np.uint8))
+                    mask_resized = mask_img.resize((256, 256), Image.NEAREST)
+                    mask_np = np.array(mask_resized)
+                    mask_bytes = (mask_np > 0).astype(np.uint8).tobytes()
+                    mask_b64 = base64.b64encode(mask_bytes).decode('utf-8')
+
+                    x1, y1, x2, y2 = box
+                    obs.append({
+                        "label": str(cls),
+                        "confidence": float(score),
                         "bbox": {
                             "x": float(x1) / width,
                             "y": float(y1) / height,
                             "width": float(x2 - x1) / width,
                             "height": float(y2 - y1) / height
                         },
-                        "worldPosition": None
-                    }
-                    for (x1, y1, x2, y2), s, c in zip(
-                        r.boxes.xyxy.tolist(),
-                        r.boxes.conf.tolist(),
-                        r.boxes.cls.tolist()
-                    )
-                ]
+                        "mask": mask_b64,
+                        "mask_width": 256,
+                        "mask_height": 256
+                    })
+            return {
+                "type": self.task,
+                "observations": obs
             }
 
 
