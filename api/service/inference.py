@@ -17,25 +17,25 @@ overrides = dict(
     conf=0.25,
     task="segment",
     mode="predict",
-    model="sam3.pt",
+    model="sam3_b.pt",
     half=True, # Use FP16 for faster inference
     save=False
 )
 
-SAM3_DEFAULT_PROMPT= '''
-    You are an agent which is used by a VR headset. Your goal is to identify as many objects as you possibly can.
-    Make sure that you return only the objects you are more than 60 percent sure about.
-    Try to categorize the returned objects in somewhat logical labels.
-    An example for labels we are NOT interested in are: ['blue book', 'green book', 'book with colorful cover', 'poster'],
-    instead we want to have the label-set ['book', 'poster'].
-'''
+SAM3_DEFAULT_PROMPT= [
+    "laptop",
+    "person",
+    "cup",
+    "plate",
+    "poster"
+]
 
 print(f"Setup inference on {DEVICE}")
 
 class InferenceSession:
     def __init__(self):
         self.model_type = None
-        self.prompt = [SAM3_DEFAULT_PROMPT]
+        self.prompt = SAM3_DEFAULT_PROMPT
         self.sam_predictor = None
         self.yolo_model = None
         self.task = None
@@ -43,7 +43,7 @@ class InferenceSession:
     
     # might be useful
     def has_default_prompt(self) -> bool:
-        return self.prompt == [SAM3_DEFAULT_PROMPT]
+        return self.prompt == SAM3_DEFAULT_PROMPT
 
     '''
         @param model_type [YOLOv26, YOLOv11, SAM3]
@@ -102,7 +102,10 @@ class InferenceSession:
             start = time.time()
             self.sam_predictor.set_image(img)
             # TODO: check return value here
-            results = self.sam_predictor(text=self.prompt)
+            results = self.sam_predictor.predict(
+                source=np.array(img),
+                texts=self.prompt
+            )
             r = results[0]
 
             obs = []

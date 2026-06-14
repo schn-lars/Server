@@ -10,14 +10,23 @@ def load_run(path: Path) -> pd.DataFrame:
         path,
         sep="|",
         header=None,
-        names=["timestamp", "duration"]
+        names=["timestamp", "duration", "rtt", "time"] # latency is overall RTT including time, time is execution time of remote
     )
     df["timestamp"] = pd.to_numeric(df["timestamp"], errors="coerce")
     df["duration"] = pd.to_numeric(df["duration"], errors="coerce")
+    df["rtt"] = pd.to_numeric(df["rtt"], errors="coerce")
+    df["time"] = pd.to_numeric(df["time"], errors="coerce")
 
-    df = df.dropna()
+    df = df.dropna(subset=["timestamp"])
 
-    df["relative_time"] = df["timestamp"] - df["timestamp"].iloc[0]
+    if df.empty:
+        return df
+    
+    df["latency"] = df["rtt"] - df["time"]
+
+    df["relative_time"] = (
+        df["timestamp"] - df["timestamp"].iloc[0]
+    )
     df = df[df["relative_time"] <= 60]
     return df
 
@@ -29,6 +38,22 @@ def calc_fps(path: Path) -> float:
     
     elapsed = df["relative_time"].iloc[-1]
     return len(df) / elapsed
+
+def calc_latency(path: Path) -> float:
+    df = load_run(path=path)
+
+    if len(df) == 0:
+        return 0.0
+
+    return df["latency"].mean()
+
+def calc_exetime(path: Path) -> float:
+    df = load_run(path=path)
+
+    if len(df) == 0:
+        return 0.0
+
+    return df["time"].mean()
 
 def evaluate(root: Path):
     results = []
@@ -45,12 +70,21 @@ def evaluate(root: Path):
                     continue
 
                 fps_values = []
+                exe_values = []
+                latency_values = []
                 for run in model.iterdir():
                     if not run.is_file():
                         continue
 
                     fps = calc_fps(run)
                     fps_values.append(fps)
+
+                    if location.name == 'remote':
+                        latency = calc_latency(run)
+                        latency_values.append(latency)
+
+                        exetime = calc_exetime(run)
+                        exe_values.append(exetime)
 
                 if fps_values:
                     results.append({
@@ -59,6 +93,10 @@ def evaluate(root: Path):
                         "model": model.name,
                         "fps_mean": np.mean(fps_values),
                         "fps_std": np.std(fps_values),
+                        "latency_mean": np.mean(latency_values),
+                        "latency_std": np.std(latency_values),
+                        "exetime_mean": np.mean(exe_values),
+                        "exetime_std": np.std(exe_values),
                         "runs": len(fps_values)
                     })
     return pd.DataFrame(results)
