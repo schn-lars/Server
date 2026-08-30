@@ -33,17 +33,18 @@ Additionally, we have provided ``mock.env``-files in all directories. These will
 ### Inference
 1. Clone mobile sam repo onto node: ``git clone https://github.com/ChaoningZhang/MobileSAM.git``
 
-### Smol
+### Smol, Qwen and minicpm
 This container is designed to run in an environment with access to a GPU.
 Since we are using NVIDIA GeForce RTX 4090, we needed to run some commands before.
 #### Prerequisites:
-1. TODO Rahel's commands rein
-2. Follow https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#with-apt-ubuntu-debian
-3. Verify your Docker-container toolkit for nvidia using: ``docker run --rm --gpus all nvidia/cuda:12.2.0-runtime-ubuntu22.04 nvidia-smi``. If you see your GPU, then you can continue.
+1. Follow https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#with-apt-ubuntu-debian
+2. Verify your Docker-container toolkit for nvidia using: ``docker run --rm --gpus all nvidia/cuda:12.2.0-runtime-ubuntu22.04 nvidia-smi``. If you see your GPU, then you can continue.
 #### Actual Container:
 1. ``cd smol``
 2. ``sudo docker build --no-cache -t smol .``
 3. ``sudo docker run --name smol --gpus all -p 8000:8000 smol``
+4. Repeat for the other AI models as well. Beware that all the models run on the same port.
+In case you want to run them in parallel, you need to add more endpoints.
 
 After all this is done, the containers should be connected to each other and the API is accepting requests.
 
